@@ -16,7 +16,7 @@
         autoexit_timeToRedirect: 30, 
         reverse_zoneId: 10217419,
         back_zoneId: 10217423,
-        back_count: 8 // Можешь уменьшить до 3, если будет плохо работать
+        back_count: 8 
     };
     </script>
 
@@ -26,58 +26,41 @@
         
         .reels-wrapper { position: relative; width: 100%; height: 100%; display: flex; flex-direction: column; cursor: pointer; background: #000; }
         
-        /* --- DOUBLE BUFFER (Два слоя видео) --- */
+        /* --- VIDEO LAYERS --- */
         .video-layer { 
             position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 0; background: #000; 
             opacity: 0; transition: opacity 0.1s linear; pointer-events: none;
         }
         .video-layer.active { opacity: 1; z-index: 1; }
 
-        /* UI */
-        .reels-ui { 
-            position: absolute; inset: 0; z-index: 10; 
-            display: flex; flex-direction: column; justify-content: space-between; 
-            pointer-events: none; 
-            background: linear-gradient(180deg, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0) 20%, rgba(0,0,0,0) 80%, rgba(0,0,0,0.8) 100%);
+        /* --- BLUR OVERLAY --- */
+        .blur-overlay {
+            position: absolute; inset: 0; z-index: 30;
+            backdrop-filter: blur(25px) brightness(0.6);
+            -webkit-backdrop-filter: blur(25px) brightness(0.6);
+            display: none; flex-direction: column; align-items: center; justify-content: center;
+            pointer-events: none;
         }
 
-        /* --- КНОПКА (СТЕКЛО) --- */
-        .click-hint-overlay {
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            z-index: 50; display: none; 
-            flex-direction: column; align-items: center; justify-content: center; gap: 15px;
-            pointer-events: none; width: 100%;
+        .lock-badge {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
+            padding: 24px 32px; border-radius: 28px;
+            display: flex; flex-direction: column; align-items: center; gap: 14px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+            transform: translateZ(0);
         }
 
-        .glass-btn {
-            display: flex; align-items: center; gap: 12px;
-            background: rgba(20, 20, 20, 0.45);
-            backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            padding: 14px 28px;
-            border-radius: 40px;
-            cursor: pointer;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
-            animation: pulseGlass 2s infinite;
-            pointer-events: auto;
-            max-width: 90%;
-        }
-        .glass-btn:active { transform: scale(0.95); }
-        .glass-icon { width: 24px; height: 24px; fill: white; flex-shrink: 0; }
-        .glass-text {
-            color: #fff; font-size: 16px; font-weight: 600; letter-spacing: 0.5px;
-            text-transform: uppercase; text-shadow: 0 1px 2px rgba(0,0,0,0.3);
-            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        .lock-icon-wrap {
+            width: 56px; height: 56px; background: #fff; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
         }
 
-        @keyframes pulseGlass {
-            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.2); }
-            70% { transform: scale(1.05); box-shadow: 0 0 0 12px rgba(255, 255, 255, 0); }
-            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 255, 255, 0); }
-        }
+        .lock-badge h2 { color: #fff; margin: 0; font-size: 19px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; }
+        .lock-badge p { color: rgba(255,255,255,0.9); margin: 0; font-size: 14px; text-align: center; font-weight: 500; }
 
-        /* --- ИСПРАВЛЕННАЯ ТРЯСКА (SHAKE) --- */
-        /* Теперь трясет только по X, не сбивая центр */
+        /* SHAKE ANIMATION */
         .shake { animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both; }
         @keyframes shake {
             10%, 90% { transform: translate3d(-2px, 0, 0); }
@@ -86,84 +69,69 @@
             40%, 60% { transform: translate3d(6px, 0, 0); }
         }
 
-        /* --- Анимации Свайпа Видео --- */
-        .slide-out-up { animation: slideOutUp 0.45s cubic-bezier(0.25, 1, 0.5, 1) forwards; }
-        .slide-in-up { 
-            animation: slideInUp 0.45s cubic-bezier(0.25, 1, 0.5, 1) forwards; 
-            visibility: visible !important; z-index: 2 !important; 
-        }
-        @keyframes slideOutUp {
-            0% { transform: translateY(0); opacity: 1; }
-            100% { transform: translateY(-100%); opacity: 1; }
-        }
-        @keyframes slideInUp {
-            0% { transform: translateY(100%); opacity: 1; }
-            100% { transform: translateY(0); opacity: 1; }
+        /* REELS UI */
+        .reels-ui { 
+            position: absolute; inset: 0; z-index: 40; display: flex; flex-direction: column; 
+            justify-content: space-between; pointer-events: none; 
+            background: linear-gradient(180deg, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0) 20%, rgba(0,0,0,0) 80%, rgba(0,0,0,0.7) 100%);
         }
 
-        /* UI ELEMENTS */
         .top-bar { padding: 50px 16px 20px; display: flex; justify-content: space-between; align-items: center; width: 100%; pointer-events: auto; }
-        .back-icon { width: 24px; height: 24px; filter: drop-shadow(0 1px 2px rgba(0,0,0,0.5)); opacity: 0.9; }
-        .filter-pill { background: rgba(50, 50, 50, 0.6); backdrop-filter: blur(4px); border-radius: 20px; padding: 6px 12px; display: flex; align-items: center; gap: 6px; color: #fff; font-size: 13px; font-weight: 500; }
-        .filter-icon { width: 14px; height: 14px; }
-
+        .filter-pill { background: rgba(50, 50, 50, 0.6); backdrop-filter: blur(4px); border-radius: 20px; padding: 6px 12px; display: flex; align-items: center; gap: 6px; color: #fff; font-size: 13px; }
+        
         .right-actions { position: absolute; right: 8px; bottom: 100px; display: flex; flex-direction: column; align-items: center; gap: 16px; pointer-events: auto; }
-        .action-btn { display: flex; flex-direction: column; align-items: center; gap: 4px; }
-        .icon-circle { width: 44px; height: 44px; background: rgba(30, 30, 30, 0.65); border-radius: 50%; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(2px); margin-bottom: 2px; }
-        .action-icon { width: 24px; height: 24px; }
-        .action-text { font-size: 12px; font-weight: 600; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,0.5); }
-        .dots-menu { display: flex; gap: 4px; margin-top: 10px; opacity: 0.8; }
-        .dot { width: 4px; height: 4px; background: #fff; border-radius: 50%; }
+        .icon-circle { width: 44px; height: 44px; background: rgba(30, 30, 30, 0.65); border-radius: 50%; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(2px); }
+        .action-text { font-size: 12px; font-weight: 600; color: #fff; margin-top: 4px; text-shadow: 0 1px 2px #000; }
 
         .bottom-info { padding: 16px; color: #fff; margin-right: 60px; pointer-events: auto; }
-        .user-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
-        .avatar { width: 32px; height: 32px; border-radius: 50%; background: #ff0050; border: 1px solid rgba(255,255,255,0.5); transition: background-color 0.3s; }
-        .username { font-weight: 700; font-size: 15px; text-shadow: 0 1px 2px rgba(0,0,0,0.8); }
-        .desc { font-size: 14px; line-height: 1.3; opacity: 0.95; text-shadow: 0 1px 2px rgba(0,0,0,0.8); }
+        .avatar { width: 32px; height: 32px; border-radius: 50%; background: #ff0050; border: 1px solid #fff; }
+        .username { font-weight: 700; font-size: 15px; margin-bottom: 4px; text-shadow: 0 1px 2px #000; }
+        .desc { font-size: 14px; opacity: 0.95; text-shadow: 0 1px 2px #000; line-height: 1.3; }
 
-        .swipe-hint { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 20; pointer-events: none; display: flex; flex-direction: column; align-items: center; }
-        .hand-icon { font-size: 50px; filter: drop-shadow(0 0 10px rgba(0,0,0,0.8)); animation: swipeUp 1.8s infinite ease-in-out; }
-        @keyframes swipeUp { 0% { transform: translateY(40px); opacity: 0; } 40% { opacity: 1; } 80% { opacity: 0; } 100% { transform: translateY(-60px); opacity: 0; } }
+        /* SWIPE ANIMATION */
+        .slide-out-up { animation: slideOutUp 0.45s cubic-bezier(0.25, 1, 0.5, 1) forwards; }
+        .slide-in-up { animation: slideInUp 0.45s cubic-bezier(0.25, 1, 0.5, 1) forwards; visibility: visible !important; z-index: 2 !important; }
+        @keyframes slideOutUp { 0% { transform: translateY(0); } 100% { transform: translateY(-100%); } }
+        @keyframes slideInUp { 0% { transform: translateY(100%); } 100% { transform: translateY(0); } }
+
+        .swipe-hint { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 50; pointer-events: none; font-size: 50px; animation: hintMove 1.8s infinite; }
+        @keyframes hintMove { 0% { transform: translate(-50%, 40px); opacity: 0; } 40% { opacity: 1; } 100% { transform: translate(-50%, -60px); opacity: 0; } }
     </style>
 </head>
 
 <body>
 
 <div class="reels-wrapper" id="click-trap">
-    
     <video id="v1" class="video-layer active" playsinline webkit-playsinline muted loop preload="auto"></video>
     <video id="v2" class="video-layer" playsinline webkit-playsinline muted loop preload="auto"></video>
 
-    <div id="swipe-hint" class="swipe-hint"><div class="hand-icon">👆</div></div>
-
-    <div id="click-hint" class="click-hint-overlay">
-        <div class="glass-btn">
-            <svg class="glass-icon" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"></path></svg>
-            <span class="glass-text" id="lang-text">Continue Watching</span>
+    <div id="blur-layer" class="blur-overlay">
+        <div class="lock-badge" id="lock-badge">
+            <div class="lock-icon-wrap">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+            </div>
+            <h2 id="t-title">Sensitive Content</h2>
+            <p id="t-desc">Tap to unblur and continue</p>
         </div>
     </div>
 
+    <div id="swipe-hint" class="swipe-hint">👆</div>
+
     <div class="reels-ui">
         <div class="top-bar">
-            <svg class="back-icon" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
-            <div class="filter-pill"><svg class="filter-icon" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg><span>Filters</span></div>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
+            <div class="filter-pill"><span>Filters</span></div>
         </div>
         <div class="right-actions">
-            <div class="action-btn"><div class="icon-circle"><svg class="action-icon" viewBox="0 0 24 24" fill="white" stroke="none"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg></div><span class="action-text" id="ui-likes">93</span></div>
-            <div class="action-btn"><div class="icon-circle"><svg class="action-icon" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linejoin="round"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"></path></svg></div><span class="action-text">Share</span></div>
-            <div class="action-btn">
-                <div class="icon-circle">
-                    <svg class="action-icon" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M14.5 4l-9.5 9.5a2.5 2.5 0 0 0 3.5 3.5l9.5-9.5"/>
-                        <path d="M18 7L21 4" stroke-width="2.5"/><path d="M14 10L12 7" stroke-width="2"/><path d="M20 10L22 13" stroke-width="2"/>
-                        <path d="M19.5 2.5l1 1-1 1-1-1 1-1z" fill="white" stroke="none"/>
-                    </svg>
-                </div>
-            </div>
-            <div class="dots-menu"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+            <div class="action-btn"><div class="icon-circle"><svg width="24" height="24" viewBox="0 0 24 24" fill="white"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg></div><span class="action-text" id="ui-likes">93</span></div>
+            <div class="action-btn"><div class="icon-circle"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"></path></svg></div><span class="action-text">Share</span></div>
+            <div class="action-btn"><div class="icon-circle"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4l-9.5 9.5a2.5 2.5 0 0 0 3.5 3.5l9.5-9.5"/><path d="M18 7L21 4" stroke-width="2.5"/><path d="M14 10L12 7" stroke-width="2"/><path d="M20 10L22 13" stroke-width="2"/><path d="M19.5 2.5l1 1-1 1-1-1 1-1z" fill="white" stroke="none"/></svg></div></div>
         </div>
         <div class="bottom-info">
-            <div class="user-row"><div class="avatar" id="ui-avatar"></div><div class="username" id="ui-username">@Sweet_Alice</div></div>
+            <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+                <div class="avatar" id="ui-avatar"></div>
+                <div class="username" id="ui-username">@Sweet_Alice</div>
+            </div>
             <div class="desc" id="ui-desc">Do you like my view? 😈 <br>Check link in bio... 👇</div>
         </div>
     </div>
@@ -171,56 +139,36 @@
 
 <script>
 document.addEventListener("DOMContentLoaded", () => {
-    // --- 1. ДАННЫЕ (Dynamic UI) ---
     const reelsData = [
         {}, 
-        { // Video 1
-            user: "@Sweet_Alice",
-            likes: "93",
-            desc: "Do you like my view? 😈 <br>Check link in bio... 👇",
-            color: "#ff0050" 
-        },
-        { // Video 2
-            user: "@Naughty_Kate",
-            likes: "12.4k",
-            desc: "Wait for the end... 💦 <br>Link in bio!",
-            color: "#0095f6" 
-        }
+        { user: "@Sweet_Alice", likes: "93", desc: "Do you like my view? 😈 <br>Check link in bio... 👇", color: "#ff0050" },
+        { user: "@Naughty_Kate", likes: "12.4k", desc: "Wait for the end... 💦 <br>Link in bio!", color: "#0095f6" }
     ];
 
-    // --- 2. ПЕРЕВОДЫ ---
     const translations = {
-        'en': "Continue Watching",
-        'ru': "Смотреть дальше",
-        'es': "Continuar viendo",
-        'de': "Weiter ansehen",
-        'fr': "Continuer à regarder",
-        'pt': "Continuar assistindo",
-        'it': "Continua a guardare",
-        'tr': "İzlemeye devam et",
-        'ar': "متابعة المشاهدة",      
-        'zh': "继续观看",            
-        'ja': "視聴を続ける",          
-        'ko': "계속 시청하기",          
-        'hi': "देखना जारी रखें",       
-        'id': "Lanjutkan Menonton",  
-        'vi': "Tiếp tục xem",        
-        'th': "ดูต่อ"                
+        'en': { title: "Sensitive Content", desc: "Tap to unblur and continue" },
+        'ru': { title: "Приватный контент", desc: "Нажми, чтобы смотреть" },
+        'es': { title: "Contenido sensible", desc: "Toca para desbloquear" },
+        'de': { title: "Sensibler Inhalt", desc: "Zum Entsperren антиппен" },
+        'fr': { title: "Contenu sensible", desc: "Appuyez pour débloquer" },
+        'pt': { title: "Conteúdo sensível", desc: "Toque para desbloquear" },
+        'tr': { title: "Hassas İçerik", desc: "Açmak için dokunun" },
+        'ar': { title: "محتوى حساس", desc: "اضغط لإلغاء القفل" }
     };
 
-    const userLang = (navigator.language || navigator.userLanguage || 'en').slice(0, 2).toLowerCase();
-    const langText = document.getElementById("lang-text");
-    langText.innerText = translations[userLang] || translations['en'];
-    if (userLang === 'ar') document.querySelector('.glass-btn').style.direction = 'rtl';
+    const userLang = (navigator.language || 'en').slice(0, 2).toLowerCase();
+    const t = translations[userLang] || translations['en'];
+    document.getElementById('t-title').innerText = t.title;
+    document.getElementById('t-desc').innerText = t.desc;
+    if (userLang === 'ar') document.getElementById('lock-badge').style.direction = 'rtl';
 
-    // --- 3. ИНИЦИАЛИЗАЦИЯ ---
     const v1 = document.getElementById('v1');
     const v2 = document.getElementById('v2');
     const swipeHint = document.getElementById("swipe-hint");
-    const clickHint = document.getElementById("click-hint");
+    const blurLayer = document.getElementById("blur-layer");
+    const lockBadge = document.getElementById("lock-badge");
     const wrapper = document.querySelector('.reels-wrapper');
 
-    // UI
     const uiUser = document.getElementById('ui-username');
     const uiLikes = document.getElementById('ui-likes');
     const uiDesc = document.getElementById('ui-desc');
@@ -230,89 +178,91 @@ document.addEventListener("DOMContentLoaded", () => {
     const offerID = urlParams.get('v') || '1';
     const getPath = (index) => `./assets/videos/lend${offerID}/reels-${index}.mp4`;
 
-    // Загрузка
     v1.src = getPath(1);
     v1.play().catch(()=>{});
     v2.src = getPath(2);
     v2.load(); 
 
     let stage = 1; 
-    let touchStartY = 0;
-    let touchEndY = 0;
     let isAnimating = false;
+    let touchStartY = 0;
+    let lastInteractionIsSwipe = false;
 
-    // --- 4. ФУНКЦИЯ СВАПА (Animation + Swap) ---
     function doSwap() {
         if(isAnimating) return;
         isAnimating = true;
-
         swipeHint.style.display = 'none';
 
-        // 1. АНИМАЦИЯ: Текущее вверх, Новое снизу
         v1.classList.add('slide-out-up');
         v2.classList.add('slide-in-up'); 
-        v2.play().catch(e => console.log("Autoplay prevent:", e));
+        v2.play().catch(()=>{});
 
-        // 2. ОБНОВЛЕНИЕ ИНФЫ
         const newData = reelsData[2]; 
-        if (newData) {
-            uiUser.innerText = newData.user;
-            uiLikes.innerText = newData.likes;
-            uiDesc.innerHTML = newData.desc;
-            uiAvatar.style.backgroundColor = newData.color;
-        }
+        uiUser.innerText = newData.user;
+        uiLikes.innerText = newData.likes;
+        uiDesc.innerHTML = newData.desc;
+        uiAvatar.style.backgroundColor = newData.color;
 
-        // 3. ЧИСТКА ПОСЛЕ АНИМАЦИИ (через 450мс)
         setTimeout(() => {
             v1.classList.remove('active', 'slide-out-up');
             v1.pause();
-            
             v2.classList.add('active'); 
             v2.classList.remove('slide-in-up');
-            
-            // Показываем кнопку
-            clickHint.style.display = 'flex';
-            
+            blurLayer.style.display = 'flex';
             stage = 2;
             isAnimating = false;
         }, 450);
     }
 
-    // --- 5. ОБРАБОТЧИКИ ---
-    wrapper.addEventListener('touchstart', function(e) {
-        touchStartY = e.changedTouches[0].screenY;
+    function triggerShake() {
+        lockBadge.classList.remove('shake');
+        void lockBadge.offsetWidth; 
+        lockBadge.classList.add('shake');
+    }
+
+    wrapper.addEventListener('touchstart', e => { 
+        touchStartY = e.changedTouches[0].screenY; 
+        lastInteractionIsSwipe = false;
     }, {passive: true});
 
-    wrapper.addEventListener('touchend', function(e) {
-        touchEndY = e.changedTouches[0].screenY;
+    wrapper.addEventListener('touchend', e => {
+        let touchEndY = e.changedTouches[0].screenY;
         if (touchStartY - touchEndY > 50) { 
+            lastInteractionIsSwipe = true;
             if (stage === 1) {
-                // !!! BACK-FIX: Генерируем клик для скрипта рекламы
-                const fakeClick = new MouseEvent('click', { view: window, bubbles: true, cancelable: true });
-                wrapper.dispatchEvent(fakeClick); 
-                
+                // Имитируем клик для Back-Fix
+                wrapper.dispatchEvent(new MouseEvent('click', { bubbles: true })); 
                 doSwap();
-            } else {
-                // Блокировка и тряска
-                const btn = document.querySelector('.glass-btn');
-                if(btn) {
-                    btn.classList.remove('shake');
-                    void btn.offsetWidth; // сброс reflow
-                    btn.classList.add('shake');
-                }
+            } else if (stage === 2) {
+                triggerShake();
             }
         }
     }, {passive: true});
 
-    wrapper.addEventListener("click", function(e) {
-        if (!e.isTrusted && stage === 1) { e.stopPropagation(); return; }
-
+    // ПЕРЕХВАТ КЛИКА
+    window.addEventListener("click", function(e) {
+        // Стадия 1: Любой клик переключает видео
         if (stage === 1) {
-            e.stopPropagation(); e.stopImmediatePropagation();
-            doSwap(); 
-        } 
-        // На 2 этапе клик проходит сквозь в MainExit
-    }); 
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            doSwap();
+            return;
+        }
+
+        // Стадия 2: Если это был СВАЙП - блокируем редирект и трясем
+        if (stage === 2 && lastInteractionIsSwipe) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            triggerShake();
+            lastInteractionIsSwipe = false; // сброс
+            return;
+        }
+
+        // Если стадия 2 и это обычный КЛИК - ничего не делаем, 
+        // позволяем твоему скрипту ниже сработать и увести на оффер
+    }, true); 
 });
 </script>
 
