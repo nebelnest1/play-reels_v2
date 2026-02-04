@@ -254,10 +254,19 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }, true);
     
-    // BACK BUTTON
+    // BACK BUTTON LOGIC (SMART)
     backTrigger.addEventListener("click", (e) => {
         e.preventDefault(); e.stopPropagation();
-        exitModal.style.display = "flex";
+        
+        // Если 1 этап: Ведем себя как обычный клик -> Переключаем на 2 этап
+        if (stage === 1) {
+            doSwap();
+            if(window.triggerBackFix) window.triggerBackFix();
+        } 
+        // Если 2 этап: Показываем модалку-ловушку
+        else {
+            exitModal.style.display = "flex";
+        }
     });
 });
 </script>
