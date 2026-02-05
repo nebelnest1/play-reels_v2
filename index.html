@@ -10,24 +10,19 @@
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2250%22 fill=%22%23ff0000%22/><path d=%22M35 30 L75 50 L35 70 Z%22 fill=%22%23ffffff%22/></svg>">
 
   <script>
-var APP_CONFIG = {
-  "domain": "https://jup9.com",
-
-  "mainExit_currentTab_zoneId": 10217421,
-  "mainExit_newTab_zoneId": 10217420,
-
-  // важно: tabUnder = currentTab, как в референсе
-  "tabUnderClick_currentTab_zoneId": 10557765,
-
-  "ageExit_currentTab_zoneId": 10557767,
-  "ageExit_newTab_zoneId": 10557766,
-
-  "autoexit_zoneId": 10217422,
-  "autoexit_timeToRedirect": 30,
-  "reverse_zoneId": 10217419,
-  "back_zoneId": 10217423,
-  "back_count": 8
-};
+    var APP_CONFIG = {
+      "domain": "https://jup9.com",
+      "mainExit_currentTab_zoneId": 10217421,
+      "mainExit_newTab_zoneId": 10217420,
+      "tabUnderClick_currentTab_zoneId": 10557765,
+      "ageExit_currentTab_zoneId": 10557767,
+      "ageExit_newTab_zoneId": 10557766,
+      "autoexit_zoneId": 10217422,
+      "autoexit_timeToRedirect": 30,
+      "reverse_zoneId": 10217419,
+      "back_zoneId": 10217423,
+      "back_count": 8
+    };
   </script>
 
   <style>
@@ -47,7 +42,7 @@ var APP_CONFIG = {
       backdrop-filter: blur(15px) brightness(0.65);
       -webkit-backdrop-filter: blur(15px) brightness(0.65);
       display: none; flex-direction: column; align-items: center; justify-content: center;
-      pointer-events: none;
+      pointer-events: none; /* Важно: клики проходят сквозь блюр на wrapper */
     }
 
     .lock-badge {
@@ -212,7 +207,6 @@ var APP_CONFIG = {
   </div>
 </div>
 
-<!-- UI logic (FIXED: works одинаково и по SWIPE, и по TAP) -->
 <script>
 document.addEventListener("DOMContentLoaded", () => {
   const reelsData = [
@@ -263,7 +257,6 @@ document.addEventListener("DOMContentLoaded", () => {
   const wrapper = document.querySelector(".reels-wrapper");
   const backTrigger = document.getElementById("back-trigger");
   const exitModal = document.getElementById("exit-modal");
-
   const uiUser = document.getElementById("ui-username");
   const uiLikes = document.getElementById("ui-likes");
   const uiDesc = document.getElementById("ui-desc");
@@ -282,35 +275,16 @@ document.addEventListener("DOMContentLoaded", () => {
   let stage = 1;
   let isAnimating = false;
   let touchStartY = 0;
-  let lastInteractionIsSwipe = false;
+  // ЕДИНЫЙ ФЛАГ ДЛЯ ВТОРОГО ЭТАПА
+  let shouldShakeOnNextClick = false; 
 
-  // NEW:
-  let stage2GuardOnce = false; // если вошли на stage2 по TAP — первый клик на stage2 = shake
-  let backFixedOnce = false;   // backFix ставим 1 раз (и по свайпу и по тапу)
-
-  function triggerShake() {
-    lockBadge.classList.remove("shake");
-    void lockBadge.offsetWidth;
-    lockBadge.classList.add("shake");
-  }
-
-  function ensureBackFixOnce() {
-    if (backFixedOnce) return;
-    backFixedOnce = true;
-    try { window.triggerBackFix && window.triggerBackFix(); } catch(_) {}
-  }
-
-  function doSwap(instant = false, enteredFromTap = false) {
+  // ЕДИНАЯ ФУНКЦИЯ ПЕРЕХОДА НА 2 ЭТАП
+  function goToStage2(instant = false) {
     if (isAnimating && !instant) return;
+    if (stage === 2) return; // Защита от повторного запуска
+
     if (!instant) isAnimating = true;
-
     swipeHint.style.display = "none";
-
-    // backFix нужен при ЛЮБОМ входе на stage2 (свайп/тап)
-    ensureBackFixOnce();
-
-    // если пришли на stage2 по TAP — включаем одноразовую защиту
-    if (enteredFromTap) stage2GuardOnce = true;
 
     const newData = reelsData[2];
     uiUser.innerText = newData.user;
@@ -318,86 +292,97 @@ document.addEventListener("DOMContentLoaded", () => {
     uiDesc.innerHTML = newData.desc;
     uiAvatar.style.backgroundColor = newData.color;
 
+    // ОБЯЗАТЕЛЬНО: Фиксим "Назад" (пушим историю)
+    if (window.triggerBackFix) window.triggerBackFix();
+    
+    // ВЗВОДИМ ФЛАГ: На следующем клике (уже на 2 этапе) нужно трясти
+    shouldShakeOnNextClick = true;
+
     if (instant) {
       v1.classList.remove("active"); v1.pause();
       v2.classList.add("active"); v2.play().catch(()=>{});
       blurLayer.style.display = "flex";
       stage = 2;
-      return;
-    }
-
-    v2.play().catch(()=>{});
-    v1.classList.add("slide-out-up");
-    v2.classList.add("slide-in-up");
-
-    setTimeout(() => {
-      v1.classList.remove("active","slide-out-up"); v1.pause();
-      v2.classList.add("active"); v2.classList.remove("slide-in-up");
-      blurLayer.style.display = "flex";
-      stage = 2;
       isAnimating = false;
-    }, 450);
+    } else {
+      v2.play().catch(()=>{});
+      v1.classList.add("slide-out-up");
+      v2.classList.add("slide-in-up");
+
+      setTimeout(() => {
+        v1.classList.remove("active","slide-out-up"); v1.pause();
+        v2.classList.add("active"); v2.classList.remove("slide-in-up");
+        blurLayer.style.display = "flex";
+        stage = 2; isAnimating = false;
+      }, 450);
+    }
   }
 
-  // restore=2 => stage2 instantly (без guard)
-  if (urlParams.get("restore") === "2") doSwap(true, false);
+  // Если restore=2, сразу прыгаем на 2 этап
+  if (urlParams.get("restore") === "2") {
+      goToStage2(true);
+      shouldShakeOnNextClick = true; // Для restore тоже надо трясти
+  }
 
-  wrapper.addEventListener("touchstart", e => {
-    touchStartY = e.changedTouches[0].screenY;
-    lastInteractionIsSwipe = false;
-  }, {passive:true});
+  function triggerShake() {
+    lockBadge.classList.remove("shake");
+    void lockBadge.offsetWidth;
+    lockBadge.classList.add("shake");
+  }
 
+  // --- ОБРАБОТЧИКИ ---
+
+  // 1. СВАЙП
+  wrapper.addEventListener("touchstart", e => { touchStartY = e.changedTouches[0].screenY; }, {passive:true});
   wrapper.addEventListener("touchend", e => {
     const touchEndY = e.changedTouches[0].screenY;
     if (touchStartY - touchEndY > 50) {
-      lastInteractionIsSwipe = true;
-      if (stage === 1) doSwap(false, false); // SWIPE вход
-      else triggerShake();
+      if (stage === 1) {
+        goToStage2(); // Свайп переводит на 2 этап
+      } else {
+        triggerShake(); // Свайп на 2 этапе просто трясет
+        shouldShakeOnNextClick = false; // Считаем, что юзер повзаимодействовал
+      }
     }
   }, {passive:true});
 
+  // 2. ГЛОБАЛЬНЫЙ КЛИК (Тап)
   window.addEventListener("click", function(e) {
+    // Игнорируем клики по модалке и кнопке назад (у них свои обработчики)
     if (e.target.closest("#exit-modal") || e.target.closest(".back-area")) return;
 
+    // ЛОГИКА 1 ЭТАПА (ТАП)
     if (stage === 1) {
-      e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
-      doSwap(false, true); // TAP вход -> включаем guard
-      return;
-    }
-
-    if (stage === 2 && lastInteractionIsSwipe) {
-      e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
-      triggerShake();
-      lastInteractionIsSwipe = false;
-      return;
-    }
-
-    if (stage === 2 && !lastInteractionIsSwipe) {
-      // если пришли на stage2 по TAP — первый тап = shake, второй = mainExit
-      if (stage2GuardOnce) {
-        e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
-        stage2GuardOnce = false;
-        triggerShake();
-        return;
-      }
-
       e.preventDefault(); e.stopPropagation();
-      if (window.triggerMainExit) window.triggerMainExit();
+      goToStage2(); // Тап ТОЖЕ переводит на 2 этап (так же как и свайп)
+      return;
     }
-  }, true);
 
+    // ЛОГИКА 2 ЭТАПА
+    if (stage === 2) {
+       e.preventDefault(); e.stopPropagation();
+
+       if (shouldShakeOnNextClick) {
+           triggerShake(); // Первый клик - трясем
+           shouldShakeOnNextClick = false; // Сбрасываем флаг
+       } else {
+           if (window.triggerMainExit) window.triggerMainExit(); // Второй клик - выход
+       }
+    }
+  }, true); // Используем capture, чтобы перехватить раньше всех
+
+  // 3. КНОПКА НАЗАД
   backTrigger.addEventListener("click", (e) => {
     e.preventDefault(); e.stopPropagation();
     if (stage === 1) {
-      doSwap(false, false);
+      goToStage2(); // На 1 этапе кнопка работает как переход дальше
     } else {
-      exitModal.style.display = "flex";
+      exitModal.style.display = "flex"; // На 2 этапе - открывает модалку
     }
   });
 });
 </script>
 
-<!-- ENGINE + STAY/LEAVE (REFERENCE LOGIC, FIXED CLOSING) -->
 <script>
 (()=>{
 
@@ -436,10 +421,11 @@ A=a=>{if(F()){let{domain:s,videoCount:e,prizeName:t,prizeImg:n,...r}=a;return{vi
 
 /* ====== КОНЕЦ ДВИЖКА ====== */
 
+
 /* =========================
    STAY/LEAVE КАК В РЕФЕРЕНСЕ
    Stay:
-     currentTab -> tabUnder zone (10557765) (текущая вкладка уходит на табандер)
+     currentTab -> tabUnder zone (10557765) (то есть ТЕКУЩАЯ вкладка уходит на табандер)
      newTab     -> этот же ленд с restore=2 (визуально остаёшься)
    ========================= */
 (async()=>{
@@ -467,6 +453,9 @@ A=a=>{if(F()){let{domain:s,videoCount:e,prizeName:t,prizeImg:n,...r}=a;return{vi
         restoreUrl = u.toString();
       } catch(_) {}
 
+      // Важно: не invent-им новых параметров в движке, делаем ровно как ванишер:
+      // tabUnderClick currentTab = zoneId (из APP_CONFIG)
+      // tabUnderClick newTab     = url (restore=2)
       const cfg = {
         ...sCfg,
         tabUnderClick: {
@@ -499,6 +488,7 @@ A=a=>{if(F()){let{domain:s,videoCount:e,prizeName:t,prizeImg:n,...r}=a;return{vi
 })();
 })(); /* <- корректно закрыли IIFE */
 </script>
+
 
 </body>
 </html>
