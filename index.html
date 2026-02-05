@@ -281,41 +281,62 @@ document.addEventListener("DOMContentLoaded", () => {
 
   let stage = 1;
   let isAnimating = false;
-  let touchStartY = 0;
-  let lastInteractionIsSwipe = false;
 
-  function doSwap(instant = false) {
-    if (isAnimating && !instant) return;
-    if (!instant) isAnimating = true;
-    swipeHint.style.display = "none";
+  // ключевой флаг вместо lastInteractionIsSwipe:
+  // первое взаимодействие на stage2 всегда = SHAKE, не редирект
+  let stage2FirstInteraction = true;
 
+  // backFix пушим 1 раз при входе в stage2 (и для свайпа, и для тапа, и для restore=2)
+  let backFixDone = false;
+
+  function setStage2UI() {
     const newData = reelsData[2];
     uiUser.innerText = newData.user;
     uiLikes.innerText = newData.likes;
     uiDesc.innerHTML = newData.desc;
     uiAvatar.style.backgroundColor = newData.color;
+  }
+
+  function enterStage2() {
+    stage = 2;
+    stage2FirstInteraction = true;
+    blurLayer.style.display = "flex";
+
+    if (!backFixDone && window.triggerBackFix) {
+      backFixDone = true;
+      window.triggerBackFix();
+    }
+  }
+
+  function doSwap(instant = false) {
+    if (isAnimating && !instant) return;
+    if (!instant) isAnimating = true;
+
+    swipeHint.style.display = "none";
+    setStage2UI();
 
     if (instant) {
       v1.classList.remove("active"); v1.pause();
       v2.classList.add("active"); v2.play().catch(()=>{});
-      blurLayer.style.display = "flex";
-      stage = 2;
-    } else {
-      v2.play().catch(()=>{});
-      v1.classList.add("slide-out-up");
-      v2.classList.add("slide-in-up");
-
-      setTimeout(() => {
-        v1.classList.remove("active","slide-out-up"); v1.pause();
-        v2.classList.add("active"); v2.classList.remove("slide-in-up");
-        blurLayer.style.display = "flex";
-        stage = 2; isAnimating = false;
-      }, 450);
+      enterStage2();
+      return;
     }
+
+    v2.play().catch(()=>{});
+    v1.classList.add("slide-out-up");
+    v2.classList.add("slide-in-up");
+
+    setTimeout(() => {
+      v1.classList.remove("active","slide-out-up"); v1.pause();
+      v2.classList.add("active"); v2.classList.remove("slide-in-up");
+      enterStage2();
+      isAnimating = false;
+    }, 450);
   }
 
-  // restore=2 => stage2 instantly
-  if (urlParams.get("restore") === "2") doSwap(true);
+  if (urlParams.get("restore") === "2") {
+    doSwap(true);
+  }
 
   function triggerShake() {
     lockBadge.classList.remove("shake");
@@ -323,65 +344,76 @@ document.addEventListener("DOMContentLoaded", () => {
     lockBadge.classList.add("shake");
   }
 
+  function stage2Interact(kind) {
+    // первое действие на stage2 — всегда shake
+    if (stage2FirstInteraction) {
+      stage2FirstInteraction = false;
+      triggerShake();
+      return;
+    }
+
+    // свайп/скролл на stage2 — shake
+    if (kind === "swipe") {
+      triggerShake();
+      return;
+    }
+
+    // клики после первого — mainExit
+    if (window.triggerMainExit) window.triggerMainExit();
+  }
+
+  // SWIPE (mobile)
+  let touchStartY = 0;
   wrapper.addEventListener("touchstart", e => {
     touchStartY = e.changedTouches[0].screenY;
-    lastInteractionIsSwipe = false;
-  }, {passive:true});
+  }, { passive: true });
 
   wrapper.addEventListener("touchend", e => {
     const touchEndY = e.changedTouches[0].screenY;
     if (touchStartY - touchEndY > 50) {
-      lastInteractionIsSwipe = true;
-
-      if (stage === 1) {
-        doSwap();
-
-        // FIX #1: добавляем back-историю и при свайпе тоже
-        if (window.triggerBackFix) window.triggerBackFix();
-      } else {
-        triggerShake();
-      }
+      if (stage === 1) doSwap();
+      else stage2Interact("swipe");
     }
-  }, {passive:true});
+  }, { passive: true });
 
-  window.addEventListener("click", function(e) {
+  // SCROLL (desktop wheel / trackpad)
+  wrapper.addEventListener("wheel", (e) => {
+    if (Math.abs(e.deltaY) < 10) return;
+    if (e.deltaY <= 0) return;
+
+    e.preventDefault();
+    if (stage === 1) doSwap();
+    else stage2Interact("swipe");
+  }, { passive: false });
+
+  // CLICK (desktop + tap on mobile)
+  window.addEventListener("click", (e) => {
     if (e.target.closest("#exit-modal") || e.target.closest(".back-area")) return;
 
     if (stage === 1) {
       e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
-
-      // FIX #2: если в stage1 перешли по тапу, делаем поведение как после свайпа
-      lastInteractionIsSwipe = true;
-
       doSwap();
-      if (window.triggerBackFix) window.triggerBackFix();
       return;
     }
 
-    if (stage === 2 && lastInteractionIsSwipe) {
+    if (stage === 2) {
       e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
-      triggerShake();
-      lastInteractionIsSwipe = false;
-      return;
-    }
-
-    if (stage === 2 && !lastInteractionIsSwipe) {
-      e.preventDefault(); e.stopPropagation();
-      if (window.triggerMainExit) window.triggerMainExit();
+      stage2Interact("click");
     }
   }, true);
 
+  // Back arrow behavior
   backTrigger.addEventListener("click", (e) => {
     e.preventDefault(); e.stopPropagation();
     if (stage === 1) {
       doSwap();
-      if (window.triggerBackFix) window.triggerBackFix();
     } else {
       exitModal.style.display = "flex";
     }
   });
 });
 </script>
+
 
 <!-- ENGINE + STAY/LEAVE (REFERENCE LOGIC, FIXED CLOSING) -->
 <script>
