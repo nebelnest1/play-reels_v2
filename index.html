@@ -12,16 +12,11 @@
   <script>
 var APP_CONFIG = {
   "domain": "https://jup9.com",
-
   "mainExit_currentTab_zoneId": 10217421,
   "mainExit_newTab_zoneId": 10217420,
-
-  // важно: tabUnder = currentTab, как в референсе
   "tabUnderClick_currentTab_zoneId": 10557765,
-
   "ageExit_currentTab_zoneId": 10557767,
   "ageExit_newTab_zoneId": 10557766,
-
   "autoexit_zoneId": 10217422,
   "autoexit_timeToRedirect": 30,
   "reverse_zoneId": 10217419,
@@ -33,98 +28,46 @@ var APP_CONFIG = {
   <style>
     * { box-sizing: border-box; outline: none; -webkit-tap-highlight-color: transparent; }
     html, body { margin: 0; padding: 0; width: 100%; height: 100%; background: #000; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
-
     .reels-wrapper { position: relative; width: 100%; height: 100%; display: flex; flex-direction: column; cursor: pointer; background: #000; }
-
-    .video-layer {
-      position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 0; background: #000;
-      opacity: 0; transition: opacity 0.3s ease-out; pointer-events: none;
-    }
+    .video-layer { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 0; background: #000; opacity: 0; transition: opacity 0.3s ease-out; pointer-events: none; }
     .video-layer.active { opacity: 1; z-index: 1; }
-
-    .blur-overlay {
-      position: absolute; inset: 0; z-index: 100;
-      backdrop-filter: blur(15px) brightness(0.65);
-      -webkit-backdrop-filter: blur(15px) brightness(0.65);
-      display: none; flex-direction: column; align-items: center; justify-content: center;
-      pointer-events: none;
-    }
-
-    .lock-badge {
-      background: rgba(0, 0, 0, 0.45); border: 1px solid rgba(255, 255, 255, 0.25);
-      backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-      padding: 24px 32px; border-radius: 28px;
-      display: flex; flex-direction: column; align-items: center; gap: 14px;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.6);
-      transform: translateZ(0);
-    }
+    .blur-overlay { position: absolute; inset: 0; z-index: 100; backdrop-filter: blur(15px) brightness(0.65); -webkit-backdrop-filter: blur(15px) brightness(0.65); display: none; flex-direction: column; align-items: center; justify-content: center; pointer-events: none; }
+    .lock-badge { background: rgba(0, 0, 0, 0.45); border: 1px solid rgba(255, 255, 255, 0.25); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); padding: 24px 32px; border-radius: 28px; display: flex; flex-direction: column; align-items: center; gap: 14px; box-shadow: 0 20px 60px rgba(0,0,0,0.6); transform: translateZ(0); }
     .lock-icon-wrap { width: 56px; height: 56px; background: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
     .lock-badge h2 { color: #fff; margin: 0; font-size: 19px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; }
     .lock-badge p { color: rgba(255,255,255,0.9); margin: 0; font-size: 14px; text-align: center; }
-
-    .reels-ui {
-      position: absolute; inset: 0; z-index: 200;
-      display: flex; flex-direction: column; justify-content: space-between;
-      pointer-events: none;
-      background: linear-gradient(180deg, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0) 20%, rgba(0,0,0,0) 80%, rgba(0,0,0,0.9) 100%);
-      transform: translateZ(10px);
-    }
-
-    .modal-overlay {
-      position: fixed; inset: 0; z-index: 9999;
-      background: rgba(0, 0, 0, 0.75); backdrop-filter: blur(5px);
-      display: none; align-items: center; justify-content: center;
-      animation: fadeIn 0.2s ease-out;
-    }
-    .modal-box {
-      background: #1c1c1e; width: 85%; max-width: 320px; border-radius: 16px; text-align: center;
-      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); transform: scale(0.95);
-      animation: popIn 0.2s forwards; overflow: hidden;
-    }
+    .reels-ui { position: absolute; inset: 0; z-index: 200; display: flex; flex-direction: column; justify-content: space-between; pointer-events: none; background: linear-gradient(180deg, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0) 20%, rgba(0,0,0,0) 80%, rgba(0,0,0,0.9) 100%); transform: translateZ(10px); }
+    .modal-overlay { position: fixed; inset: 0; z-index: 9999; background: rgba(0, 0, 0, 0.75); backdrop-filter: blur(5px); display: none; align-items: center; justify-content: center; animation: fadeIn 0.2s ease-out; }
+    .modal-box { background: #1c1c1e; width: 85%; max-width: 320px; border-radius: 16px; text-align: center; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); transform: scale(0.95); animation: popIn 0.2s forwards; overflow: hidden; }
     .modal-header { padding: 24px 20px; }
     .modal-icon { font-size: 36px; margin-bottom: 12px; display: block; }
     .modal-title { color: #fff; font-size: 20px; font-weight: 700; margin-bottom: 8px; }
     .modal-text { color: #aeaeb2; font-size: 15px; line-height: 1.4; }
     .modal-actions { display: flex; border-top: 1px solid #38383a; }
-    .modal-btn {
-      flex: 1; padding: 18px; font-size: 17px; font-weight: 600;
-      background: transparent; border: none; cursor: pointer; border-right: 1px solid #38383a;
-    }
+    .modal-btn { flex: 1; padding: 18px; font-size: 17px; font-weight: 600; background: transparent; border: none; cursor: pointer; border-right: 1px solid #38383a; }
     .modal-btn:last-child { border-right: none; }
     .modal-btn:active { background: #2c2c2e; }
     .btn-stay { color: #0a84ff; }
     .btn-leave { color: #8e8e93; font-weight: 400; }
-
     .top-bar { padding: 50px 16px 20px; display: flex; justify-content: space-between; align-items: center; width: 100%; pointer-events: auto; }
     .back-area { padding: 20px; margin: -20px; cursor: pointer; display: flex; align-items: center; justify-content: center; pointer-events: auto; }
     .filter-pill { background: rgba(50, 50, 50, 0.6); backdrop-filter: blur(4px); border-radius: 20px; padding: 6px 12px; display: flex; align-items: center; gap: 6px; color: #fff; font-size: 13px; font-weight: 500; }
-
     .right-actions { position: absolute; right: 8px; bottom: 100px; display: flex; flex-direction: column; align-items: center; gap: 16px; pointer-events: auto; }
     .action-btn { display: flex; flex-direction: column; align-items: center; gap: 4px; }
     .icon-circle { width: 44px; height: 44px; background: rgba(30, 30, 30, 0.65); border-radius: 50%; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(2px); margin-bottom: 2px; }
     .action-text { font-size: 12px; font-weight: 600; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,0.5); }
-
     .bottom-info { padding: 16px; color: #fff; margin-right: 60px; pointer-events: auto; }
-    .avatar { width: 36px; height: 36px; border-radius: 50%; background: #ff0050; border: 2px solid #fff; transition: background-color 0.3s; }
+    .avatar { width: 36px; height: 36px; border-radius: 50%; background: #ff0050; border: 2px solid #fff; }
     .username { font-weight: 700; font-size: 15px; text-shadow: 0 1px 2px rgba(0,0,0,0.8); margin-bottom: 4px; }
     .desc { font-size: 14px; line-height: 1.3; opacity: 0.95; text-shadow: 0 1px 2px rgba(0,0,0,0.8); }
-
     .slide-out-up { animation: slideOutUp 0.45s cubic-bezier(0.25, 1, 0.5, 1) forwards; }
     .slide-in-up { animation: slideInUp 0.45s cubic-bezier(0.25, 1, 0.5, 1) forwards; visibility: visible !important; z-index: 2 !important; }
     @keyframes slideOutUp { 0% { transform: translateY(0); opacity: 1; } 100% { transform: translateY(-100%); opacity: 1; } }
     @keyframes slideInUp { 0% { transform: translateY(100%); opacity: 1; } 100% { transform: translateY(0); opacity: 1; } }
-
     .shake { animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both; }
-    @keyframes shake {
-      10%, 90% { transform: translate3d(-2px, 0, 0); }
-      20%, 80% { transform: translate3d(4px, 0, 0); }
-      30%, 50%, 70% { transform: translate3d(-6px, 0, 0); }
-      40%, 60% { transform: translate3d(6px, 0, 0); }
-    }
-
+    @keyframes shake { 10%, 90% { transform: translate3d(-2px, 0, 0); } 20%, 80% { transform: translate3d(4px, 0, 0); } 30%, 50%, 70% { transform: translate3d(-6px, 0, 0); } 40%, 60% { transform: translate3d(6px, 0, 0); } }
     @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     @keyframes popIn { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-
     .swipe-hint { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 50; pointer-events: none; display: flex; flex-direction: column; align-items: center; }
     .hand-icon { font-size: 50px; filter: drop-shadow(0 0 10px rgba(0,0,0,0.8)); animation: swipeUp 1.8s infinite ease-in-out; }
     @keyframes swipeUp { 0% { transform: translateY(40px); opacity: 0; } 40% { opacity: 1; } 80% { opacity: 0; } 100% { transform: translateY(-60px); opacity: 0; } }
@@ -178,27 +121,15 @@ var APP_CONFIG = {
 
     <div class="right-actions">
       <div class="action-btn">
-        <div class="icon-circle">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="white"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
-        </div>
+        <div class="icon-circle"><svg width="24" height="24" viewBox="0 0 24 24" fill="white"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg></div>
         <span class="action-text" id="ui-likes">93</span>
       </div>
       <div class="action-btn">
-        <div class="icon-circle">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"></path></svg>
-        </div>
+        <div class="icon-circle"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"></path></svg></div>
         <span class="action-text">Share</span>
       </div>
       <div class="action-btn">
-        <div class="icon-circle">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
-            <path d="M14.5 4l-9.5 9.5a2.5 2.5 0 0 0 3.5 3.5l9.5-9.5"/>
-            <path d="M18 7L21 4" stroke-width="2.5"/>
-            <path d="M14 10L12 7" stroke-width="2"/>
-            <path d="M20 10L22 13" stroke-width="2"/>
-            <path d="M19.5 2.5l1 1-1 1-1-1 1-1z" fill="white" stroke="none"/>
-          </svg>
-        </div>
+        <div class="icon-circle"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M14.5 4l-9.5 9.5a2.5 2.5 0 0 0 3.5 3.5l9.5-9.5"/><path d="M18 7L21 4" stroke-width="2.5"/><path d="M14 10L12 7" stroke-width="2"/><path d="M20 10L22 13" stroke-width="2"/><path d="M19.5 2.5l1 1-1 1-1-1 1-1z" fill="white" stroke="none"/></svg></div>
       </div>
     </div>
 
@@ -212,7 +143,6 @@ var APP_CONFIG = {
   </div>
 </div>
 
-<!-- UI logic -->
 <script>
 document.addEventListener("DOMContentLoaded", () => {
   const reelsData = [
@@ -223,26 +153,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const translations = {
     en: { title: "Sensitive Content", desc: "Tap to unblur and continue", mTitle: "Wait!", mText: "You are closing a private connection. Access will be lost.", stay: "Stay", leave: "Leave" },
-    ru: { title: "Приватный контент", desc: "Нажми, чтобы смотреть", mTitle: "Подожди!", mText: "Вы закрываете приватное соединение. Доступ будет утерян.", stay: "Остаться", leave: "Уйти" },
-    es: { title: "Contenido sensible", desc: "Toca para desbloquear", mTitle: "¡Espera!", mText: "Estás cerrando una conexión privada. Se perderá el acceso.", stay: "Quedarse", leave: "Salir" },
-    de: { title: "Sensibler Inhalt", desc: "Zum Entsperren tippen", mTitle: "Warte!", mText: "Der Zugriff geht verloren.", stay: "Bleiben", leave: "Verlassen" },
-    fr: { title: "Contenu sensible", desc: "Appuyez pour débloquer", mTitle: "Attendez !", mText: "L'accès sera perdu.", stay: "Rester", leave: "Quitter" },
-    pt: { title: "Conteúdo sensível", desc: "Toque para desbloquear", mTitle: "Espere!", mText: "O acesso será perdido.", stay: "Ficar", leave: "Sair" },
-    it: { title: "Contenuto sensibile", desc: "Tocca per sbloccare", mTitle: "Attendi!", mText: "L'accesso andrà perso.", stay: "Resta", leave: "Esci" },
-    tr: { title: "Hassas İçerik", desc: "Açmak için dokunun", mTitle: "Bekle!", mText: "Erişim kaybolacak.", stay: "Kal", leave: "Ayrıl" },
-    ar: { title: "محتوى حساس", desc: "اضغط لإلغاء القفل", mTitle: "انتظر!", mText: "سيتم فقدان الوصول.", stay: "البقاء", leave: "المغادرة" },
-    zh: { title: "敏感内容", desc: "点击解锁并继续", mTitle: "等等！", mText: "访问权限将丢失。", stay: "留在", leave: "离开" },
-    ja: { title: "不適切な内容", desc: "タップして解除", mTitle: "待って！", mText: "アクセスできなくなります。", stay: "残る", leave: "退出する" },
-    ko: { title: "민감한 콘텐츠", desc: "잠금을 해제하려면 탭하세요", mTitle: "잠깐만요!", mText: "액세스 권한이 손실됩니다.", stay: "머무르다", leave: "떠나다" },
-    hi: { title: "संवेदनशील सामग्री", desc: "देखने के लिए टैप करें", mTitle: "रुको!", mText: "पहुंच खो जाएगी।", stay: "रहो", leave: "छोड़ो" },
-    id: { title: "Konten Sensitif", desc: "Ketuk untuk membuka", mTitle: "Tunggu!", mText: "Akses akan hilang.", stay: "Tetap", leave: "Tinggalkan" },
-    vi: { title: "Nội dung nhạy cảm", desc: "Nhấn để mở khóa", mTitle: "Chờ đã!", mText: "Quyền truy cập sẽ bị mất.", stay: "Ở lại", leave: "Rời đi" },
-    th: { title: "เนื้อหาที่ละเอียดอ่อน", desc: "แตะเพื่อปลดล็อก", mTitle: "เดี๋ยวก่อน!", mText: "การเข้าถึงจะหายไป", stay: "อยู่ต่อ", leave: "ออกไป" }
+    ru: { title: "Приватный контент", desc: "Нажми, чтобы смотреть", mTitle: "Подожди!", mText: "Вы закрываете приватное соединение. Доступ будет утерян.", stay: "Остаться", leave: "Уйти" }
   };
 
   const userLang = (navigator.language || "en").slice(0, 2).toLowerCase();
   const t = translations[userLang] || translations.en;
-
   document.getElementById("t-title").innerText = t.title;
   document.getElementById("t-desc").innerText = t.desc;
   document.getElementById("m-title").innerText = t.mTitle;
@@ -250,231 +165,125 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("btn-stay").innerText = t.stay;
   document.getElementById("btn-leave").innerText = t.leave;
 
-  if (userLang === "ar") {
-    document.getElementById("lock-badge").style.direction = "rtl";
-    document.getElementById("exit-modal").style.direction = "rtl";
-  }
-
-  const v1 = document.getElementById("v1");
-  const v2 = document.getElementById("v2");
-  const swipeHint = document.getElementById("swipe-hint");
-  const blurLayer = document.getElementById("blur-layer");
-  const lockBadge = document.getElementById("lock-badge");
-  const wrapper = document.querySelector(".reels-wrapper");
-  const backTrigger = document.getElementById("back-trigger");
-  const exitModal = document.getElementById("exit-modal");
-
-  const uiUser = document.getElementById("ui-username");
-  const uiLikes = document.getElementById("ui-likes");
-  const uiDesc = document.getElementById("ui-desc");
-  const uiAvatar = document.getElementById("ui-avatar");
+  const v1 = document.getElementById("v1"), v2 = document.getElementById("v2"), swipeHint = document.getElementById("swipe-hint");
+  const blurLayer = document.getElementById("blur-layer"), lockBadge = document.getElementById("lock-badge"), wrapper = document.querySelector(".reels-wrapper");
+  const backTrigger = document.getElementById("back-trigger"), exitModal = document.getElementById("exit-modal");
+  const uiUser = document.getElementById("ui-username"), uiLikes = document.getElementById("ui-likes"), uiDesc = document.getElementById("ui-desc"), uiAvatar = document.getElementById("ui-avatar");
 
   const urlParams = new URLSearchParams(window.location.search);
   const offerID = urlParams.get("v") || "1";
-  const getPath = (index) => `./assets/videos/lend${offerID}/reels-${index}.mp4`;
+  v1.src = `./assets/videos/lend${offerID}/reels-1.mp4`;
+  v2.src = `./assets/videos/lend${offerID}/reels-2.mp4`;
+  v1.play().catch(()=>{}); v2.load();
 
-  v1.src = getPath(1);
-  v2.src = getPath(2);
-  v2.muted = true;
-  v1.play().catch(()=>{});
-  v2.load();
-
-  let stage = 1;
-  let isAnimating = false;
-  let touchStartY = 0;
-  let lastInteractionIsSwipe = false;
+  let stage = 1, isAnimating = false, touchStartY = 0, lastInteractionIsSwipe = false;
 
   function doSwap(instant = false) {
     if (isAnimating && !instant) return;
     if (!instant) isAnimating = true;
     swipeHint.style.display = "none";
-
-    const newData = reelsData[2];
-    uiUser.innerText = newData.user;
-    uiLikes.innerText = newData.likes;
-    uiDesc.innerHTML = newData.desc;
-    uiAvatar.style.backgroundColor = newData.color;
+    uiUser.innerText = reelsData[2].user; uiLikes.innerText = reelsData[2].likes; uiDesc.innerHTML = reelsData[2].desc; uiAvatar.style.backgroundColor = reelsData[2].color;
 
     if (instant) {
-      v1.classList.remove("active"); v1.pause();
-      v2.classList.add("active"); v2.play().catch(()=>{});
-      blurLayer.style.display = "flex";
-      stage = 2;
+      v1.classList.remove("active"); v1.pause(); v2.classList.add("active"); v2.play().catch(()=>{});
+      blurLayer.style.display = "flex"; stage = 2;
     } else {
-      v2.play().catch(()=>{});
-      v1.classList.add("slide-out-up");
-      v2.classList.add("slide-in-up");
-
+      v2.play().catch(()=>{}); v1.classList.add("slide-out-up"); v2.classList.add("slide-in-up");
       setTimeout(() => {
-        v1.classList.remove("active","slide-out-up"); v1.pause();
-        v2.classList.add("active"); v2.classList.remove("slide-in-up");
-        blurLayer.style.display = "flex";
-        stage = 2; isAnimating = false;
+        v1.classList.remove("active","slide-out-up"); v1.pause(); v2.classList.add("active"); v2.classList.remove("slide-in-up");
+        blurLayer.style.display = "flex"; stage = 2; isAnimating = false;
       }, 450);
     }
   }
 
-  // restore=2 => stage2 instantly
   if (urlParams.get("restore") === "2") doSwap(true);
-
-  function triggerShake() {
-    lockBadge.classList.remove("shake");
-    void lockBadge.offsetWidth;
-    lockBadge.classList.add("shake");
-  }
 
   wrapper.addEventListener("touchstart", e => { touchStartY = e.changedTouches[0].screenY; lastInteractionIsSwipe = false; }, {passive:true});
   wrapper.addEventListener("touchend", e => {
     const touchEndY = e.changedTouches[0].screenY;
     if (touchStartY - touchEndY > 50) {
       lastInteractionIsSwipe = true;
-      if (stage === 1) doSwap();
-      else triggerShake();
+      if (stage === 1) { 
+          doSwap(); 
+          if(window.triggerBackFix) window.triggerBackFix(); // Фикс истории при свайпе
+      } else triggerShake();
     }
   }, {passive:true});
 
   window.addEventListener("click", function(e) {
     if (e.target.closest("#exit-modal") || e.target.closest(".back-area")) return;
-
     if (stage === 1) {
-      e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
-      doSwap();
-      if (window.triggerBackFix) window.triggerBackFix();
+      e.preventDefault(); e.stopPropagation(); doSwap();
+      if (window.triggerBackFix) window.triggerBackFix(); // Фикс истории при тапе
       return;
     }
-
-    if (stage === 2 && lastInteractionIsSwipe) {
-      e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
-      triggerShake();
-      lastInteractionIsSwipe = false;
-      return;
-    }
-
-    if (stage === 2 && !lastInteractionIsSwipe) {
-      e.preventDefault(); e.stopPropagation();
-      if (window.triggerMainExit) window.triggerMainExit();
-    }
+    if (stage === 2 && lastInteractionIsSwipe) { triggerShake(); lastInteractionIsSwipe = false; return; }
+    if (stage === 2 && !lastInteractionIsSwipe) { if (window.triggerMainExit) window.triggerMainExit(); }
   }, true);
 
   backTrigger.addEventListener("click", (e) => {
-    e.preventDefault(); e.stopPropagation();
-    if (stage === 1) {
-      doSwap();
-      if (window.triggerBackFix) window.triggerBackFix();
-    } else {
-      exitModal.style.display = "flex";
-    }
+    if (stage === 1) { doSwap(); if (window.triggerBackFix) window.triggerBackFix(); } 
+    else { exitModal.style.display = "flex"; }
   });
+
+  function triggerShake() { lockBadge.classList.remove("shake"); void lockBadge.offsetWidth; lockBadge.classList.add("shake"); }
 });
 </script>
 
-<!-- ENGINE + STAY/LEAVE (REFERENCE LOGIC, FIXED CLOSING) -->
 <script>
 (()=>{
-
-/* ====== ТВОЙ ДВИЖОК (оставлен как есть) ====== */
 var e,t,n,r,o,a=Object.create,s=Object.defineProperty,i=Object.getOwnPropertyDescriptor,l=Object.getOwnPropertyNames,d=Object.getPrototypeOf,c=Object.prototype.hasOwnProperty,
 u=(t,n,r,a)=>{if(n&&"object"==typeof n||"function"==typeof n)for(let e of l(n))c.call(t,e)||e===r||s(t,e,{get:()=>n[e],enumerable:!(a=i(n,e))||a.enumerable});return t},
 m=(e,t,n)=>(n=null!=e?a(d(e)):{},u(!t&&e&&e.__esModule?n:s(n,"default",{value:e,enumerable:!0}),e)),
-y=(e={"src/landings/vanisher/locale/en.json"(e,t){t.exports={}}},function(){return t||(0,e[l(e)[0]])((t={exports:{}}).exports,t),t.exports}),
-w=(e=>(e.Error="Error",e.RangeError="RangeError",e.ReferenceError="ReferenceError",e.SecurityError="SecurityError",e.SyntaxError="SyntaxError",e.TypeError="TypeError",e.Unknown="Unknown",e))({}),
-g=(e=>(e.rejectionhandled="rejectionhandled",e.unhandledrejection="unhandledrejection",e))({}),
-h=((()=>{let n=window.syncMetric;var e;n?(window.addEventListener("error",e=>{var t;e.filename.includes("extension")||(t=`errorMessage: ${e.message}, lineNumber: ${e.lineno}, columnNumber: ${e.colno}, file: `+e.filename,e=e.error.name&&Object.values(w).includes(e.error.name)?e.error.name:"Unknown",n({event:"error",errorMessage:t,errorSubType:e,errorType:"JS"}))}),
-window.addEventListener("unhandledrejection",e=>{var t;"object"==typeof e.reason&&null!=(t=null==(t=e.reason)?void 0:t.stack)&&t.includes("extension")||(t="object"==typeof e.reason&&null!=(t=e.reason)&&t.message?e.reason.message:e.reason?JSON.stringify(e.reason):"",e=e.type,e=Object.values(g).includes(e)?e:"Unknown",n({event:"unhandledRejection",errorMessage:t,errorSubType:e,errorType:"JS"}))}),
-"production-archive"!==((null==(e=document.querySelector("html"))?void 0:e.getAttribute("data-env"))||"")||Object.keys(APP_CONFIG).length||n({event:"error",errorMessage:"Empty APP_CONFIG",errorSubType:"EmptyAppConfig",errorType:"CUSTOM"})):void 0})(),
-async()=>{var e=navigator;if(!e.userAgentData)return"";try{var t=["platformVersion"];return(await e.userAgentData.getHighEntropyValues(t)).platformVersion}catch(e){return e instanceof Error&&window.syncMetric&&window.syncMetric({event:"error",errorMessage:e.message,errorType:"CUSTOM",errorSubType:"FetchPlatformVersion"}),""}}),
-v=()=>{if("undefined"!=typeof Intl&&"function"==typeof Intl.DateTimeFormat){var e=Intl.DateTimeFormat().resolvedOptions().timeZone;if(e)return e}return""},
+h=(async()=>{var e=navigator;if(!e.userAgentData)return"";try{var t=["platformVersion"];return(await e.userAgentData.getHighEntropyValues(t)).platformVersion}catch(e){return""}}),
+v=()=>"undefined"!=typeof Intl&&"function"==typeof Intl.DateTimeFormat?Intl.DateTimeFormat().resolvedOptions().timeZone:"",
 U=()=>(new Date).getTimezoneOffset(),
 N=t=>{let n=new URLSearchParams;return Object.keys(t).forEach(e=>{t[e]&&n.set(e,t[e])}),n},
 p=new URL(window.location.href),
-b={pz:null!=(r=p.searchParams.get("pz"))?r:"",tb:null!=(r=p.searchParams.get("tb"))?r:"",tb_reverse:null!=(r=p.searchParams.get("tb_reverse"))?r:"",ae:null!=(r=p.searchParams.get("ae"))?r:"",z:null!=(r=p.searchParams.get("z"))?r:"",var:null!=(r=p.searchParams.get("var"))?r:"",var_1:null!=(r=p.searchParams.get("var_1"))?r:"",var_2:null!=(r=p.searchParams.get("var_2"))?r:"",var_3:null!=(r=p.searchParams.get("var_3"))?r:"",b:null!=(r=p.searchParams.get("b"))?r:"",campaignid:null!=(r=p.searchParams.get("campaignid"))?r:"",abtest:null!=(r=p.searchParams.get("abtest"))?r:"",rhd:null!=(r=p.searchParams.get("rhd"))?r:"1",s:null!=(r=p.searchParams.get("s"))?r:"",ymid:null!=(r=p.searchParams.get("ymid"))?r:"",wua:null!=(r=p.searchParams.get("wua"))?r:"",use_full_list_or_browsers:null!=(r=p.searchParams.get("use_full_list_or_browsers"))?r:"",cid:null!=(r=p.searchParams.get("cid"))?r:"",geo:null!=(r=p.searchParams.get("geo"))?r:""},
-R=({passParamToParams:e,searchParams:a,windowUrl:o})=>(e.forEach(e=>{var{from:e,to:t,joinWith:n}=e;let r=Array.isArray(e)?e.map(e=>null!=(e=o.searchParams.get(e))?e:"").filter(Boolean).join(null!=n?n:""):null!=(n=o.searchParams.get(e))?n:"";r&&t.forEach(e=>{a.set(e,r)})}),a),
-f=async({zone:e,passParamToParams:t})=>{var n=v(),r=U(),a=(null==(a=document.querySelector("html"))?void 0:a.getAttribute("data-version"))||"",o=(null==(o=document.querySelector("html"))?void 0:o.getAttribute("data-landing-name"))||"",s=null!=(s=window.templateHash)?s:"",a=JSON.stringify({dataVer:a,landingName:o,templateHash:s}),o=btoa(a),s={pz:b.pz,tb:b.tb,tb_reverse:b.tb_reverse,ae:b.ae,ab2r:b.abtest||String(APP_CONFIG.abtest||"")};let i={ymid:null!=(a=b.var_1)?a:b.var,var:null!=(a=b.var_2)?a:b.z,var_3:b.var_3,b:b.b,campaignid:b.campaignid,click_id:b.s,rhd:b.rhd,os_version:await h(),btz:n.toString(),bto:r.toString(),cmeta:o};e&&(i.zoneid=e),Object.entries(s).forEach(([e,t])=>{t&&(i[e]=t)});a=N(i);return t?R({passParamToParams:t,searchParams:a,windowUrl:new URL(window.location.href)}):a},
-D=(t,n)=>{try{for(let e=0;e<n;e+=1)window.history.pushState(null,"Please wait...",t);var e=window.location.href;window.history.pushState(null,document.title,e)}catch(e){e instanceof Error&&window.syncMetric&&window.syncMetric({event:"error",errorMessage:e.message,errorType:"CUSTOM",errorSubType:"PushStateToHistory"})}},
-P=async t=>{var t=null==t?void 0:t.back;if(t){var{currentTab:n,pageUrl:r}=t;if(n){var t=null!=(t=t.count)?t:10,{origin:a,pathname:o}=window.location;let e=""+a+o;r?e=r:((e=(e=e.includes("index.html")?e.split("/index.html")[0]:e).includes("back.html")?e.split("/back.html")[0]:e).endsWith("/")&&(e=e.substring(0,e.length-1)),e+="/back.html");a=new URL(e),o=await f({zone:n.zoneId}),r=(n.url?o.set("url",n.url):n.domain&&n.zoneId&&(o.set("z",n.zoneId),o.set("domain",n.domain)),decodeURIComponent(a.toString()+"?"+o.toString()));D(r,t)}}},
-S=async(e,t,n)=>{t=t.includes("http")?t:"https://"+t,t=new URL(t+"/afu.php"),e=await f({zone:e.toString(),passParamToParams:n}),n=decodeURIComponent(t.toString()+"?"+e.toString());return n},
-E=({url:e})=>{window.location.replace(e)},
-$=({currentTabUrl:e,newTabUrl:t})=>{t?(t=window.open(t,"_blank"))&&(t.opener=null,e)&&document.addEventListener("visibilitychange",()=>{"visible"===document.visibilityState&&E({url:e})}):e&&E({url:e})},
-_=(e,t)=>{},
-T=async(t,n,r=!0)=>{var a,o=t[n].currentTab;if(o){let e;if(o.zoneId&&o.domain)return null!=(a=window.syncMetric)&&a.call(window,{event:n,exitZoneId:o.zoneId}),e=await S(o.zoneId,o.domain),r&&await P(t),E({url:e});if(o.url)return null!=(a=window.syncMetric)&&a.call(window,{event:n,exitZoneId:o.url}),e=o.url,r&&await P(t),E({url:e})}_(o,n)},
-I=async(n,r)=>{var a,o=n[r];if(o){var{currentTab:s,newTab:i}=o;let e;s&&(s.zoneId&&s.domain?(e=await S(s.zoneId,s.domain),null!=(a=window.syncMetric)&&a.call(window,{event:r,exitZoneId:s.zoneId})):s.url?e=s.url:_(o,r));let t;i&&(i.zoneId&&i.domain?(t=await S(i.zoneId,i.domain),null!=(a=window.syncMetric)&&a.call(window,{event:r,exitZoneId:i.zoneId})):i.url?t=i.url:_(o,r)),await P(n),void $({currentTabUrl:e,newTabUrl:t})}else _(o,r)},
-F=()=>"undefined"!=typeof APP_CONFIG||(document.body.innerHTML=`<p style="">LANDING CAN'T BE RENDERED. 🔔 PLEASE ADD CODE.</p>`,!1),
-B=["currentTab","newTab"],
-k=["zoneId","url"],
-A=a=>{if(F()){let{domain:s,videoCount:e,prizeName:t,prizeImg:n,...r}=a;return{videoCount:e,prizeName:t,prizeImg:n,...Object.entries(r).reduce((e,[t,n])=>{var r,[t,a,o]=t.split("_");return t&&(B.includes(a)?(r=a,k.includes(o)&&(e[t]={...e[t],[r]:{domain:"zoneId"===o?s:void 0,[o]:n}})):k.includes(a)?(r=a,e[t]={...e[t],currentTab:{domain:"zoneId"===r?s:void 0,[r]:n}}):(o=a,e[t]={...e[t],[o]:n})),e},{})}}};
+b={pz:p.searchParams.get("pz")||"",z:p.searchParams.get("z")||"",s:p.searchParams.get("s")||"",ymid:p.searchParams.get("ymid")||""},
+f=async({zone:e})=>{var n=v(),r=U();let i={ymid:b.ymid,var:b.z,click_id:b.s,os_version:await h(),btz:n.toString(),bto:r.toString()};if(e)i.zoneid=e;return N(i)},
+D=(t,n)=>{try{for(let e=0;e<n;e+=1)window.history.pushState(null,"",t);window.history.pushState(null,document.title,window.location.href)}catch(e){}},
+P=async t=>{var t=null==t?void 0:t.back;if(t&&t.currentTab){var c=t.count||10;let e=window.location.origin+window.location.pathname;if(!e.includes("back.html")) e=e.substring(0,e.lastIndexOf('/')+1)+"back.html";let o=await f({zone:t.currentTab.zoneId});o.set("domain",t.currentTab.domain||APP_CONFIG.domain);D(decodeURIComponent(e+"?"+o.toString()),c)}},
+S=async(e,t)=>{t=t.includes("http")?t:"https://"+t;let n=await f({zone:e.toString()});return decodeURIComponent(t+"/afu.php?"+n.toString())},
+I=async(n,r)=>{var o=n[r];if(o){let e,t;if(o.currentTab) e=await S(o.currentTab.zoneId,o.currentTab.domain);if(o.newTab) t=await S(o.newTab.zoneId,o.newTab.domain);if(t){let w=window.open(t,"_blank");if(w)w.opener=null;if(e)window.location.replace(e)}else if(e)window.location.replace(e)}},
+A=a=>{let{domain:s,...r}=a;return Object.entries(r).reduce((e,[t,n])=>{var r,[t,a,o]=t.split("_");return t&&(a==="currentTab"?(r=a,e[t]={...e[t],[r]:{domain:s,zoneId:n}}):a==="newTab"?(r=a,e[t]={...e[t],[r]:{domain:s,zoneId:n}}):e[t]={...e[t],[a]:n}),e},{})};
 
-(async()=>{let s,i=A(APP_CONFIG);if(i){var l=null==i?void 0:i.autoexit;if(null!=l&&l.currentTab){let e=null!=(s=l.timeToRedirect)?s:90,t="visible"===document.visibilityState,n=!1,r=function(){"visible"===document.visibilityState?(t=!0,n&&T(i,"autoexit")):t=!1},a=()=>(document.addEventListener("visibilitychange",r),setTimeout(()=>{n=!0,t&&T(i,"autoexit")},1e3*e)),o=a();l=()=>{clearTimeout(o),document.removeEventListener("visibilitychange",r)};document.addEventListener("mousemove",l),document.addEventListener("click",l),document.addEventListener("scroll",l)}}})();
-
-/* ====== КОНЕЦ ДВИЖКА ====== */
-
-
-/* =========================
-   STAY/LEAVE КАК В РЕФЕРЕНСЕ
-   Stay:
-     currentTab -> tabUnder zone (10557765) (то есть ТЕКУЩАЯ вкладка уходит на табандер)
-     newTab     -> этот же ленд с restore=2 (визуально остаёшься)
-   ========================= */
 (async()=>{
   const sCfg = A(APP_CONFIG);
-  if(!sCfg) return;
+  window.triggerMainExit = async () => await I(sCfg, "mainExit");
+  window.triggerBackFix = async () => await P(sCfg);
 
-  window.triggerMainExit = async () => { await I(sCfg, "mainExit"); };
-  window.triggerAgeExit  = async () => { await I(sCfg, "ageExit"); };
-  window.triggerBackFix  = async () => { await P(sCfg); };
-
+  // --- FIX STAY BUTTON (Manual TabUnder) ---
   const btnStay = document.getElementById("btn-stay");
-  if (btnStay) {
-    const btn = btnStay.cloneNode(true);
-    btnStay.parentNode.replaceChild(btn, btnStay);
-
+  if(btnStay){
+    const btn = btnStay.cloneNode(true); btnStay.parentNode.replaceChild(btn, btnStay);
     btn.onclick = async (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      e.stopImmediatePropagation();
-
-      let restoreUrl = "";
+      e.preventDefault(); e.stopPropagation();
+      if(window.syncMetric) window.syncMetric({event:"tabUnderClick",exitZoneId:APP_CONFIG.tabUnderClick_currentTab_zoneId});
+      
+      const params = new URLSearchParams(window.location.search);
+      params.set('zoneid', APP_CONFIG.tabUnderClick_currentTab_zoneId);
+      const offerUrl = `${APP_CONFIG.domain}/afu.php?${params.toString()}`;
+      
       try {
-        const u = new URL(window.location.href);
-        u.searchParams.set("restore", "2");
-        restoreUrl = u.toString();
-      } catch(_) {}
-
-      // Важно: не invent-им новых параметров в движке, делаем ровно как ванишер:
-      // tabUnderClick currentTab = zoneId (из APP_CONFIG)
-      // tabUnderClick newTab     = url (restore=2)
-      const cfg = {
-        ...sCfg,
-        tabUnderClick: {
-          ...(sCfg.tabUnderClick || {}),
-          newTab: { url: restoreUrl }
-        }
-      };
-
-      await I(cfg, "tabUnderClick");
-
-      const modal = document.getElementById("exit-modal");
-      if (modal) modal.style.display = "none";
+        const link = document.createElement('a'); link.href = offerUrl; link.target = "_blank";
+        document.body.appendChild(link); link.click();
+        setTimeout(() => document.body.removeChild(link), 100);
+        window.focus();
+      } catch(err) {}
+      
+      document.getElementById("exit-modal").style.display = "none";
       return false;
     };
   }
 
   const btnLeave = document.getElementById("btn-leave");
-  if (btnLeave) {
-    const btn = btnLeave.cloneNode(true);
-    btnLeave.parentNode.replaceChild(btn, btnLeave);
-
-    btn.onclick = async (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      e.stopImmediatePropagation();
-      await I(sCfg, "ageExit");
-      return false;
-    };
+  if(btnLeave){
+    const btn = btnLeave.cloneNode(true); btnLeave.parentNode.replaceChild(btn, btnLeave);
+    btn.onclick = async () => { await I(sCfg, "ageExit"); return false; };
   }
 })();
-})(); /* <- корректно закрыли IIFE */
+})();
 </script>
-
-
 </body>
 </html>
