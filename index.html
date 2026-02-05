@@ -281,62 +281,41 @@ document.addEventListener("DOMContentLoaded", () => {
 
   let stage = 1;
   let isAnimating = false;
+  let touchStartY = 0;
+  let lastInteractionIsSwipe = false;
 
-  // ключевой флаг вместо lastInteractionIsSwipe:
-  // первое взаимодействие на stage2 всегда = SHAKE, не редирект
-  let stage2FirstInteraction = true;
+  function doSwap(instant = false) {
+    if (isAnimating && !instant) return;
+    if (!instant) isAnimating = true;
+    swipeHint.style.display = "none";
 
-  // backFix пушим 1 раз при входе в stage2 (и для свайпа, и для тапа, и для restore=2)
-  let backFixDone = false;
-
-  function setStage2UI() {
     const newData = reelsData[2];
     uiUser.innerText = newData.user;
     uiLikes.innerText = newData.likes;
     uiDesc.innerHTML = newData.desc;
     uiAvatar.style.backgroundColor = newData.color;
-  }
-
-  function enterStage2() {
-    stage = 2;
-    stage2FirstInteraction = true;
-    blurLayer.style.display = "flex";
-
-    if (!backFixDone && window.triggerBackFix) {
-      backFixDone = true;
-      window.triggerBackFix();
-    }
-  }
-
-  function doSwap(instant = false) {
-    if (isAnimating && !instant) return;
-    if (!instant) isAnimating = true;
-
-    swipeHint.style.display = "none";
-    setStage2UI();
 
     if (instant) {
       v1.classList.remove("active"); v1.pause();
       v2.classList.add("active"); v2.play().catch(()=>{});
-      enterStage2();
-      return;
+      blurLayer.style.display = "flex";
+      stage = 2;
+    } else {
+      v2.play().catch(()=>{});
+      v1.classList.add("slide-out-up");
+      v2.classList.add("slide-in-up");
+
+      setTimeout(() => {
+        v1.classList.remove("active","slide-out-up"); v1.pause();
+        v2.classList.add("active"); v2.classList.remove("slide-in-up");
+        blurLayer.style.display = "flex";
+        stage = 2; isAnimating = false;
+      }, 450);
     }
-
-    v2.play().catch(()=>{});
-    v1.classList.add("slide-out-up");
-    v2.classList.add("slide-in-up");
-
-    setTimeout(() => {
-      v1.classList.remove("active","slide-out-up"); v1.pause();
-      v2.classList.add("active"); v2.classList.remove("slide-in-up");
-      enterStage2();
-      isAnimating = false;
-    }, 450);
   }
 
-  if (urlParams.get("restore") === "2") {
-    doSwap(true);
-  }
+  // restore=2 => stage2 instantly
+  if (urlParams.get("restore") === "2") doSwap(true);
 
   function triggerShake() {
     lockBadge.classList.remove("shake");
@@ -344,76 +323,50 @@ document.addEventListener("DOMContentLoaded", () => {
     lockBadge.classList.add("shake");
   }
 
-  function stage2Interact(kind) {
-    // первое действие на stage2 — всегда shake
-    if (stage2FirstInteraction) {
-      stage2FirstInteraction = false;
-      triggerShake();
-      return;
-    }
-
-    // свайп/скролл на stage2 — shake
-    if (kind === "swipe") {
-      triggerShake();
-      return;
-    }
-
-    // клики после первого — mainExit
-    if (window.triggerMainExit) window.triggerMainExit();
-  }
-
-  // SWIPE (mobile)
-  let touchStartY = 0;
-  wrapper.addEventListener("touchstart", e => {
-    touchStartY = e.changedTouches[0].screenY;
-  }, { passive: true });
-
+  wrapper.addEventListener("touchstart", e => { touchStartY = e.changedTouches[0].screenY; lastInteractionIsSwipe = false; }, {passive:true});
   wrapper.addEventListener("touchend", e => {
     const touchEndY = e.changedTouches[0].screenY;
     if (touchStartY - touchEndY > 50) {
+      lastInteractionIsSwipe = true;
       if (stage === 1) doSwap();
-      else stage2Interact("swipe");
+      else triggerShake();
     }
-  }, { passive: true });
+  }, {passive:true});
 
-  // SCROLL (desktop wheel / trackpad)
-  wrapper.addEventListener("wheel", (e) => {
-    if (Math.abs(e.deltaY) < 10) return;
-    if (e.deltaY <= 0) return;
-
-    e.preventDefault();
-    if (stage === 1) doSwap();
-    else stage2Interact("swipe");
-  }, { passive: false });
-
-  // CLICK (desktop + tap on mobile)
-  window.addEventListener("click", (e) => {
+  window.addEventListener("click", function(e) {
     if (e.target.closest("#exit-modal") || e.target.closest(".back-area")) return;
 
     if (stage === 1) {
       e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
       doSwap();
+      if (window.triggerBackFix) window.triggerBackFix();
       return;
     }
 
-    if (stage === 2) {
+    if (stage === 2 && lastInteractionIsSwipe) {
       e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
-      stage2Interact("click");
+      triggerShake();
+      lastInteractionIsSwipe = false;
+      return;
+    }
+
+    if (stage === 2 && !lastInteractionIsSwipe) {
+      e.preventDefault(); e.stopPropagation();
+      if (window.triggerMainExit) window.triggerMainExit();
     }
   }, true);
 
-  // Back arrow behavior
   backTrigger.addEventListener("click", (e) => {
     e.preventDefault(); e.stopPropagation();
     if (stage === 1) {
       doSwap();
+      if (window.triggerBackFix) window.triggerBackFix();
     } else {
       exitModal.style.display = "flex";
     }
   });
 });
 </script>
-
 
 <!-- ENGINE + STAY/LEAVE (REFERENCE LOGIC, FIXED CLOSING) -->
 <script>
@@ -454,98 +407,74 @@ A=a=>{if(F()){let{domain:s,videoCount:e,prizeName:t,prizeImg:n,...r}=a;return{vi
 
 /* ====== КОНЕЦ ДВИЖКА ====== */
 
-/* =========================
-   STAY/LEAVE КАК В РЕФЕРЕНСЕ (FIX: работает и после свайпа, и после тапа на 1-м экране)
-   ========================= */
-(async () => {
-  const sCfg = A(APP_CONFIG);
-  if (!sCfg) return;
 
-  // 1) Глобальные триггеры для UI-скрипта
+/* =========================
+   STAY/LEAVE КАК В РЕФЕРЕНСЕ
+   Stay:
+     currentTab -> tabUnder zone (10557765) (то есть ТЕКУЩАЯ вкладка уходит на табандер)
+     newTab     -> этот же ленд с restore=2 (визуально остаёшься)
+   ========================= */
+(async()=>{
+  const sCfg = A(APP_CONFIG);
+  if(!sCfg) return;
+
   window.triggerMainExit = async () => { await I(sCfg, "mainExit"); };
   window.triggerAgeExit  = async () => { await I(sCfg, "ageExit"); };
   window.triggerBackFix  = async () => { await P(sCfg); };
 
-  // 2) helper: URL для "визуально остаёмся" (stage2)
-  const buildRestoreUrl = () => {
-    try {
-      const u = new URL(window.location.href);
-      u.searchParams.set("restore", "2");
-      return u.toString();
-    } catch (_) {
-      return "";
-    }
-  };
-
-  // 3) helper: безопасное закрытие модалки
-  const hideModal = () => {
-    const modal = document.getElementById("exit-modal");
-    if (modal) modal.style.display = "none";
-  };
-
-  // 4) STAY: currentTab -> tabUnder (по APP_CONFIG), newTab -> этот же ленд (restore=2)
-  //    ВАЖНО: делаем override BOTH currentTab и newTab,
-  //    чтобы никогда не улетать currentTab на оффер, даже если где-то на странице уже подмешался currentTab.url.
-  const wireStay = () => {
-    const btnStay = document.getElementById("btn-stay");
-    if (!btnStay) return;
-
-    // снимаем старые обработчики
+  const btnStay = document.getElementById("btn-stay");
+  if (btnStay) {
     const btn = btnStay.cloneNode(true);
     btnStay.parentNode.replaceChild(btn, btnStay);
 
-    btn.addEventListener("click", async (e) => {
+    btn.onclick = async (e) => {
       e.preventDefault();
       e.stopPropagation();
       e.stopImmediatePropagation();
 
-      const restoreUrl = buildRestoreUrl();
+      let restoreUrl = "";
+      try {
+        const u = new URL(window.location.href);
+        u.searchParams.set("restore", "2");
+        restoreUrl = u.toString();
+      } catch(_) {}
 
-      // cfg для tabUnderClick:
-      // - currentTab: всегда restoreUrl (остаемся визуально)
-      // - newTab: всегда тот же restoreUrl (дубль-страховка; можно оставить, чтобы браузер точно открыл "видимую" вкладку)
-      // - zoneId для табандера берётся из APP_CONFIG.tabUnderClick_currentTab_zoneId
-      //   (это и есть то, зачем он нужен в твоём конфиге)
+      // Важно: не invent-им новых параметров в движке, делаем ровно как ванишер:
+      // tabUnderClick currentTab = zoneId (из APP_CONFIG)
+      // tabUnderClick newTab     = url (restore=2)
       const cfg = {
         ...sCfg,
         tabUnderClick: {
           ...(sCfg.tabUnderClick || {}),
-          currentTab: restoreUrl ? { url: restoreUrl } : (sCfg.tabUnderClick?.currentTab),
-          newTab:      restoreUrl ? { url: restoreUrl } : (sCfg.tabUnderClick?.newTab)
+          newTab: { url: restoreUrl }
         }
       };
 
       await I(cfg, "tabUnderClick");
 
-      hideModal();
+      const modal = document.getElementById("exit-modal");
+      if (modal) modal.style.display = "none";
       return false;
-    }, true);
-  };
+    };
+  }
 
-  // 5) LEAVE: ageExit
-  const wireLeave = () => {
-    const btnLeave = document.getElementById("btn-leave");
-    if (!btnLeave) return;
-
+  const btnLeave = document.getElementById("btn-leave");
+  if (btnLeave) {
     const btn = btnLeave.cloneNode(true);
     btnLeave.parentNode.replaceChild(btn, btnLeave);
 
-    btn.addEventListener("click", async (e) => {
+    btn.onclick = async (e) => {
       e.preventDefault();
       e.stopPropagation();
       e.stopImmediatePropagation();
-
       await I(sCfg, "ageExit");
       return false;
-    }, true);
-  };
-
-  wireStay();
-  wireLeave();
+    };
+  }
 })();
-
 })(); /* <- корректно закрыли IIFE */
 </script>
+
 
 </body>
 </html>
