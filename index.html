@@ -282,8 +282,7 @@ document.addEventListener("DOMContentLoaded", () => {
   let stage = 1;
   let isAnimating = false;
   let touchStartY = 0;
-  // Флаг теперь означает "Был ли переход только что? Нужно ли трясти замок?"
-  let lastInteractionIsSwipe = false; 
+  let lastInteractionIsSwipe = false;
 
   function doSwap(instant = false) {
     if (isAnimating && !instant) return;
@@ -315,6 +314,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+  // restore=2 => stage2 instantly
   if (urlParams.get("restore") === "2") doSwap(true);
 
   function triggerShake() {
@@ -324,11 +324,10 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   wrapper.addEventListener("touchstart", e => { touchStartY = e.changedTouches[0].screenY; lastInteractionIsSwipe = false; }, {passive:true});
-  
   wrapper.addEventListener("touchend", e => {
     const touchEndY = e.changedTouches[0].screenY;
     if (touchStartY - touchEndY > 50) {
-      lastInteractionIsSwipe = true; // Свайп -> ставим флаг для тряски
+      lastInteractionIsSwipe = true;
       if (stage === 1) doSwap();
       else triggerShake();
     }
@@ -337,28 +336,20 @@ document.addEventListener("DOMContentLoaded", () => {
   window.addEventListener("click", function(e) {
     if (e.target.closest("#exit-modal") || e.target.closest(".back-area")) return;
 
-    // --- ИСПРАВЛЕНИЕ ЗДЕСЬ ---
     if (stage === 1) {
       e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
-      
-      // Мы говорим: "Это действие переключило видео, значит следующее нажатие должно вызвать Shake"
-      lastInteractionIsSwipe = true; 
-      
       doSwap();
       if (window.triggerBackFix) window.triggerBackFix();
       return;
     }
-    // -------------------------
 
-    // Если флаг true (мы только что пришли сюда или потрясли), то трясем замок
     if (stage === 2 && lastInteractionIsSwipe) {
       e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
       triggerShake();
-      lastInteractionIsSwipe = false; // Сбрасываем флаг, теперь следующий клик будет Exit
+      lastInteractionIsSwipe = false;
       return;
     }
 
-    // Если флаг false (уже потрясли), то идем на выход
     if (stage === 2 && !lastInteractionIsSwipe) {
       e.preventDefault(); e.stopPropagation();
       if (window.triggerMainExit) window.triggerMainExit();
@@ -368,7 +359,6 @@ document.addEventListener("DOMContentLoaded", () => {
   backTrigger.addEventListener("click", (e) => {
     e.preventDefault(); e.stopPropagation();
     if (stage === 1) {
-      lastInteractionIsSwipe = true; // Тут тоже желательно поставить, на всякий случай
       doSwap();
       if (window.triggerBackFix) window.triggerBackFix();
     } else {
@@ -432,46 +422,55 @@ A=a=>{if(F()){let{domain:s,videoCount:e,prizeName:t,prizeImg:n,...r}=a;return{vi
   window.triggerAgeExit  = async () => { await I(sCfg, "ageExit"); };
   window.triggerBackFix  = async () => { await P(sCfg); };
 
-const btnStay = document.getElementById('btn-stay');
-if (btnStay) {
-  const newBtnStay = btnStay.cloneNode(true);
-  btnStay.parentNode.replaceChild(newBtnStay, btnStay);
+  const btnStay = document.getElementById("btn-stay");
+  if (btnStay) {
+    const btn = btnStay.cloneNode(true);
+    btnStay.parentNode.replaceChild(btn, btnStay);
 
-  newBtnStay.addEventListener('click', async (ev) => {
-    ev.preventDefault();
-    ev.stopPropagation();
-    ev.stopImmediatePropagation();
+    btn.onclick = async (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      e.stopImmediatePropagation();
 
-    // 0) закрываем модалку сразу (чтобы не было “миганий”)
-    const modal = document.getElementById('exit-modal');
-    if (modal) modal.style.display = 'none';
+      let restoreUrl = "";
+      try {
+        const u = new URL(window.location.href);
+        u.searchParams.set("restore", "2");
+        restoreUrl = u.toString();
+      } catch(_) {}
 
-    // 1) URL этого же ленда с restore=2
-    let restoreUrl = "";
-    try {
-      const u = new URL(window.location.href);
-      u.searchParams.set('restore', '2');
-      restoreUrl = u.toString();
-    } catch(_) {}
+      // Важно: не invent-им новых параметров в движке, делаем ровно как ванишер:
+      // tabUnderClick currentTab = zoneId (из APP_CONFIG)
+      // tabUnderClick newTab     = url (restore=2)
+      const cfg = {
+        ...sCfg,
+        tabUnderClick: {
+          ...(sCfg.tabUnderClick || {}),
+          newTab: { url: restoreUrl }
+        }
+      };
 
-    // 2) Собираем URL tabunder (afu.php) и открываем в НОВОЙ вкладке
-    try {
-      const tu = (s.tabUnderClick && s.tabUnderClick.newTab) ? s.tabUnderClick.newTab : null;
-      if (tu && tu.zoneId && tu.domain) {
-        const tabUrl = await S(tu.zoneId, tu.domain); // S() — генератор afu.php внутри движка
-        const w = window.open(tabUrl, "_blank");
-        if (w) w.opener = null;
-      }
-    } catch(_) {}
+      await I(cfg, "tabUnderClick");
 
-    // 3) “магия” как в референсе: текущую вкладку перезагружаем на restoreUrl (визуально ты “на том же месте”)
-    if (restoreUrl) {
-      try { window.location.replace(restoreUrl); } catch(_) { window.location.href = restoreUrl; }
-    }
+      const modal = document.getElementById("exit-modal");
+      if (modal) modal.style.display = "none";
+      return false;
+    };
+  }
 
-    return false;
-  }, true);
-}
+  const btnLeave = document.getElementById("btn-leave");
+  if (btnLeave) {
+    const btn = btnLeave.cloneNode(true);
+    btnLeave.parentNode.replaceChild(btn, btnLeave);
+
+    btn.onclick = async (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      e.stopImmediatePropagation();
+      await I(sCfg, "ageExit");
+      return false;
+    };
+  }
 })();
 })(); /* <- корректно закрыли IIFE */
 </script>
