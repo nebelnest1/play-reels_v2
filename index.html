@@ -1,171 +1,275 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="theme-color" content="#000000">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#000000">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
-    <title>(1) Private Video Request</title>
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2250%22 fill=%22%23ff0000%22/><path d=%22M35 30 L75 50 L35 70 Z%22 fill=%22%23ffffff%22/></svg>">
+  <title>(1) Private Video Request</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2250%22 fill=%22%23ff0000%22/><path d=%22M35 30 L75 50 L35 70 Z%22 fill=%22%23ffffff%22/></svg>">
 
-    <script>
-    var APP_CONFIG = {
-        domain: "https://jup9.com",
-        
-        // --- 1. Main Exit (Оффер - High CPM) ---
-        mainExit_currentTab_zoneId: 10217421,
-        mainExit_newTab_zoneId: 10217420,
-        
-        // --- 2. Tab Under (Кнопка "Stay") ---
-        // ВАЖНО: _newTab_zoneId открывает рекламу в новой вкладке, оставляя юзера на ленде
-        tabUnderClick_newTab_zoneId: 10557765, 
+  <script>
+  var APP_CONFIG = {
+    domain: "https://jup9.com",
 
-        // --- 3. Age Exit (Кнопка "Leave") ---
-        ageExit_currentTab_zoneId: 10557767,
-        ageExit_newTab_zoneId: 10557766,
+    // --- 1. Main Exit (Оффер - High CPM) ---
+    mainExit_currentTab_zoneId: 10217421,
+    mainExit_newTab_zoneId: 10217420,
 
-        // Прочее
-        autoexit_zoneId: 10217422,
-        autoexit_timeToRedirect: 30, 
-        reverse_zoneId: 10217419,
-        back_zoneId: 10217423,
-        back_count: 8
-    };
-    </script>
+    // --- 2. Tab Under (Кнопка "Stay") ---
+    tabUnderClick_newTab_zoneId: 10557765,
 
-    <style>
-        /* CSS БЕЗ ИЗМЕНЕНИЙ */
-        * { box-sizing: border-box; outline: none; -webkit-tap-highlight-color: transparent; }
-        html, body { margin: 0; padding: 0; width: 100%; height: 100%; background: #000; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
-        .reels-wrapper { position: relative; width: 100%; height: 100%; display: flex; flex-direction: column; cursor: pointer; background: #000; }
-        .video-layer { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 0; background: #000; opacity: 0; transition: opacity 0.1s linear; pointer-events: none; }
-        .video-layer.active { opacity: 1; z-index: 1; }
-        .blur-overlay { position: absolute; inset: 0; z-index: 30; backdrop-filter: blur(12px) brightness(0.7); -webkit-backdrop-filter: blur(12px) brightness(0.7); display: none; flex-direction: column; align-items: center; justify-content: center; pointer-events: none; }
-        .lock-badge { background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(255, 255, 255, 0.2); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); padding: 24px 32px; border-radius: 28px; display: flex; flex-direction: column; align-items: center; gap: 14px; box-shadow: 0 15px 45px rgba(0,0,0,0.5); transform: translateZ(0); }
-        .lock-icon-wrap { width: 50px; height: 50px; background: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
-        .lock-badge h2 { color: #fff; margin: 0; font-size: 18px; font-weight: 800; text-transform: uppercase; }
-        .lock-badge p { color: rgba(255,255,255,0.9); margin: 0; font-size: 14px; text-align: center; }
-        .modal-overlay { position: fixed; inset: 0; z-index: 999; background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); display: none; align-items: center; justify-content: center; animation: fadeIn 0.2s ease-out; }
-        .modal-box { background: #1c1c1e; width: 85%; max-width: 320px; border-radius: 14px; text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.8); transform: scale(0.95); animation: popIn 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; overflow: hidden; }
-        .modal-header { padding: 24px 16px 20px; }
-        .modal-icon { font-size: 32px; margin-bottom: 12px; display: block; }
-        .modal-title { color: #fff; font-size: 20px; font-weight: 700; margin-bottom: 8px; }
-        .modal-text { color: #aeaeb2; font-size: 15px; line-height: 1.4; }
-        .modal-actions { display: flex; border-top: 1px solid #38383a; }
-        .modal-btn { flex: 1; padding: 18px; font-size: 17px; font-weight: 500; background: transparent; border: none; cursor: pointer; border-right: 1px solid #38383a; }
-        .modal-btn:last-child { border-right: none; font-weight: 700; }
-        .modal-btn:active { background: #2c2c2e; }
-        .btn-stay { color: #0a84ff; } 
-        .btn-leave { color: #8e8e93; } 
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        @keyframes popIn { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-        .shake { animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both; }
-        @keyframes shake { 10%, 90% { transform: translate3d(-2px, 0, 0); } 20%, 80% { transform: translate3d(4px, 0, 0); } 30%, 50%, 70% { transform: translate3d(-6px, 0, 0); } 40%, 60% { transform: translate3d(6px, 0, 0); } }
-        .reels-ui { position: absolute; inset: 0; z-index: 40; display: flex; flex-direction: column; justify-content: space-between; pointer-events: none; background: linear-gradient(180deg, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0) 20%, rgba(0,0,0,0) 80%, rgba(0,0,0,0.7) 100%); }
-        .top-bar { padding: 50px 16px 20px; display: flex; justify-content: space-between; pointer-events: auto; }
-        .back-area { padding: 15px; margin: -15px; cursor: pointer; display: flex; align-items: center; justify-content: center; pointer-events: auto; }
-        .right-actions { position: absolute; right: 8px; bottom: 100px; display: flex; flex-direction: column; align-items: center; gap: 16px; pointer-events: auto; }
-        .icon-circle { width: 44px; height: 44px; background: rgba(30, 30, 30, 0.65); border-radius: 50%; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(2px); }
-        .action-text { font-size: 12px; font-weight: 600; color: #fff; margin-top: 4px; }
-        .bottom-info { padding: 16px; color: #fff; margin-right: 60px; pointer-events: auto; }
-        .avatar { width: 32px; height: 32px; border-radius: 50%; background: #ff0050; border: 1px solid #fff; }
-        .username { font-weight: 700; font-size: 15px; margin-bottom: 4px; }
-        .desc { font-size: 14px; opacity: 0.95; line-height: 1.3; }
-        .slide-out-up { animation: slideOutUp 0.45s cubic-bezier(0.25, 1, 0.5, 1) forwards; }
-        .slide-in-up { animation: slideInUp 0.45s cubic-bezier(0.25, 1, 0.5, 1) forwards; visibility: visible !important; z-index: 2 !important; }
-        @keyframes slideOutUp { 0% { transform: translateY(0); } 100% { transform: translateY(-100%); } }
-        @keyframes slideInUp { 0% { transform: translateY(100%); } 100% { transform: translateY(0); } }
-        .swipe-hint { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 50; pointer-events: none; font-size: 50px; animation: hintMove 1.8s infinite; }
-        @keyframes hintMove { 0% { transform: translate(-50%, 40px); opacity: 0; } 40% { opacity: 1; } 100% { transform: translate(-50%, -60px); opacity: 0; } }
-    </style>
+    // --- 3. Age Exit (Кнопка "Leave") ---
+    ageExit_currentTab_zoneId: 10557767,
+    ageExit_newTab_zoneId: 10557766,
+
+    // Прочее
+    autoexit_zoneId: 10217422,
+    autoexit_timeToRedirect: 30,
+    reverse_zoneId: 10217419,
+    back_zoneId: 10217423,
+    back_count: 8
+  };
+  </script>
+
+  <style>
+    * { box-sizing: border-box; outline: none; -webkit-tap-highlight-color: transparent; }
+    html, body { margin: 0; padding: 0; width: 100%; height: 100%; background: #000; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+    .reels-wrapper { position: relative; width: 100%; height: 100%; display: flex; flex-direction: column; cursor: pointer; background: #000; }
+
+    /* VIDEO LAYERS */
+    .video-layer {
+      position: absolute; inset: 0; width: 100%; height: 100%;
+      object-fit: cover; z-index: 0; background: #000;
+      opacity: 0; transition: opacity 0.1s linear; pointer-events: none;
+
+      /* anti-flicker / GPU */
+      transform: translateZ(0);
+      backface-visibility: hidden;
+      will-change: transform, opacity;
+    }
+    .video-layer.active { opacity: 1; z-index: 1; }
+    .video-layer.prep { opacity: 0; z-index: 2; } /* v2 warmed up (in flow, invisible) */
+
+    /* BLUR LOCK */
+    .blur-overlay {
+      position: absolute; inset: 0; z-index: 30;
+      backdrop-filter: blur(12px) brightness(0.7);
+      -webkit-backdrop-filter: blur(12px) brightness(0.7);
+      display: none; flex-direction: column; align-items: center; justify-content: center;
+      pointer-events: auto;
+    }
+    .lock-badge {
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+      padding: 24px 32px; border-radius: 28px;
+      display: flex; flex-direction: column; align-items: center; gap: 14px;
+      box-shadow: 0 15px 45px rgba(0,0,0,0.5);
+      transform: translateZ(0);
+    }
+    .lock-icon-wrap { width: 50px; height: 50px; background: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+    .lock-badge h2 { color: #fff; margin: 0; font-size: 18px; font-weight: 800; text-transform: uppercase; }
+    .lock-badge p { color: rgba(255,255,255,0.9); margin: 0; font-size: 14px; text-align: center; }
+
+    /* MODAL */
+    .modal-overlay {
+      position: fixed; inset: 0; z-index: 999;
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+      display: none; align-items: center; justify-content: center;
+      animation: fadeIn 0.2s ease-out;
+    }
+    .modal-box {
+      background: #1c1c1e;
+      width: 85%; max-width: 320px;
+      border-radius: 14px; text-align: center;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.8);
+      transform: scale(0.95);
+      animation: popIn 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+      overflow: hidden;
+    }
+    .modal-header { padding: 24px 16px 20px; }
+    .modal-icon { font-size: 32px; margin-bottom: 12px; display: block; }
+    .modal-title { color: #fff; font-size: 20px; font-weight: 700; margin-bottom: 8px; }
+    .modal-text { color: #aeaeb2; font-size: 15px; line-height: 1.4; }
+    .modal-actions { display: flex; border-top: 1px solid #38383a; }
+    .modal-btn {
+      flex: 1; padding: 18px;
+      font-size: 17px; font-weight: 500;
+      background: transparent; border: none;
+      cursor: pointer; border-right: 1px solid #38383a;
+    }
+    .modal-btn:last-child { border-right: none; font-weight: 700; }
+    .modal-btn:active { background: #2c2c2e; }
+    .btn-stay { color: #0a84ff; }
+    .btn-leave { color: #8e8e93; }
+
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes popIn { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+    .shake { animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both; }
+    @keyframes shake {
+      10%, 90% { transform: translate3d(-2px, 0, 0); }
+      20%, 80% { transform: translate3d(4px, 0, 0); }
+      30%, 50%, 70% { transform: translate3d(-6px, 0, 0); }
+      40%, 60% { transform: translate3d(6px, 0, 0); }
+    }
+
+    /* UI */
+    .reels-ui {
+      position: absolute; inset: 0; z-index: 40;
+      display: flex; flex-direction: column; justify-content: space-between;
+      pointer-events: none;
+      background: linear-gradient(180deg, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0) 20%, rgba(0,0,0,0) 80%, rgba(0,0,0,0.7) 100%);
+    }
+    .top-bar { padding: 50px 16px 20px; display: flex; justify-content: space-between; pointer-events: auto; }
+    .back-area { padding: 15px; margin: -15px; cursor: pointer; display: flex; align-items: center; justify-content: center; pointer-events: auto; }
+
+    .right-actions { position: absolute; right: 8px; bottom: 100px; display: flex; flex-direction: column; align-items: center; gap: 16px; pointer-events: auto; }
+    .icon-circle { width: 44px; height: 44px; background: rgba(30, 30, 30, 0.65); border-radius: 50%; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(2px); }
+    .action-text { font-size: 12px; font-weight: 600; color: #fff; margin-top: 4px; }
+
+    .bottom-info { padding: 16px; color: #fff; margin-right: 60px; pointer-events: auto; }
+    .avatar { width: 32px; height: 32px; border-radius: 50%; background: #ff0050; border: 1px solid #fff; }
+    .username { font-weight: 700; font-size: 15px; margin-bottom: 4px; }
+    .desc { font-size: 14px; opacity: 0.95; line-height: 1.3; }
+
+    /* swipe animations */
+    .slide-out-up { animation: slideOutUp 0.45s cubic-bezier(0.25, 1, 0.5, 1) forwards; }
+    .slide-in-up { animation: slideInUp 0.45s cubic-bezier(0.25, 1, 0.5, 1) forwards; visibility: visible !important; z-index: 2 !important; opacity: 1 !important; }
+
+    @keyframes slideOutUp { 0% { transform: translateY(0); } 100% { transform: translateY(-100%); } }
+    @keyframes slideInUp { 0% { transform: translateY(100%); } 100% { transform: translateY(0); } }
+
+    .swipe-hint { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 50; pointer-events: none; font-size: 50px; animation: hintMove 1.8s infinite; }
+    @keyframes hintMove { 0% { transform: translate(-50%, 40px); opacity: 0; } 40% { opacity: 1; } 100% { transform: translate(-50%, -60px); opacity: 0; } }
+  </style>
 </head>
 
 <body>
-
-<div class="reels-wrapper" id="click-trap">
+  <div class="reels-wrapper" id="click-trap">
     <video id="v1" class="video-layer active" playsinline webkit-playsinline muted loop preload="auto"></video>
     <video id="v2" class="video-layer" playsinline webkit-playsinline muted loop preload="auto"></video>
 
     <div id="blur-layer" class="blur-overlay">
-        <div class="lock-badge" id="lock-badge">
-            <div class="lock-icon-wrap">
-                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-            </div>
-            <h2 id="t-title">Sensitive Content</h2>
-            <p id="t-desc">Tap to unblur and continue</p>
+      <div class="lock-badge" id="lock-badge">
+        <div class="lock-icon-wrap">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2.5">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+          </svg>
         </div>
+        <h2 id="t-title">Sensitive Content</h2>
+        <p id="t-desc">Tap to unblur and continue</p>
+      </div>
     </div>
 
     <div id="exit-modal" class="modal-overlay">
-        <div class="modal-box">
-            <div class="modal-header">
-                <span class="modal-icon">⚠️</span>
-                <div class="modal-title" id="m-title">Wait!</div>
-                <div class="modal-text" id="m-text">You are closing a private connection. Access will be lost.</div>
-            </div>
-            <div class="modal-actions">
-                <button class="modal-btn btn-leave" id="btn-leave">Leave</button>
-                <button class="modal-btn btn-stay" id="btn-stay">Stay</button>
-            </div>
+      <div class="modal-box" role="dialog" aria-modal="true">
+        <div class="modal-header">
+          <span class="modal-icon">⚠️</span>
+          <div class="modal-title" id="m-title">Wait!</div>
+          <div class="modal-text" id="m-text">You are closing a private connection. Access will be lost.</div>
         </div>
+        <div class="modal-actions">
+          <button class="modal-btn btn-leave" id="btn-leave" type="button">Leave</button>
+          <button class="modal-btn btn-stay" id="btn-stay" type="button">Stay</button>
+        </div>
+      </div>
     </div>
 
     <div id="swipe-hint" class="swipe-hint">👆</div>
 
     <div class="reels-ui">
-        <div class="top-bar">
-            <div class="back-area" id="back-trigger">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
-            </div>
-            <div style="background:rgba(50,50,50,0.6); padding:6px 12px; border-radius:20px; color:#fff; font-size:13px;">Filters</div>
+      <div class="top-bar">
+        <div class="back-area" id="back-trigger">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5">
+            <polyline points="15 18 9 12 15 6"></polyline>
+          </svg>
         </div>
-        <div class="right-actions">
-            <div class="action-btn"><div class="icon-circle"><svg width="24" height="24" viewBox="0 0 24 24" fill="white"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg></div><span class="action-text" id="ui-likes">93</span></div>
-            <div class="action-btn"><div class="icon-circle"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"></path></svg></div><span class="action-text">Share</span></div>
-            <div class="action-btn"><div class="icon-circle"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M14.5 4l-9.5 9.5a2.5 2.5 0 0 0 3.5 3.5l9.5-9.5"/><path d="M18 7L21 4" stroke-width="2.5"/><path d="M14 10L12 7" stroke-width="2"/><path d="M20 10L22 13" stroke-width="2"/><path d="M19.5 2.5l1 1-1 1-1-1 1-1z" fill="white" stroke="none"/></svg></div></div>
-        </div>
-        <div class="bottom-info">
-            <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
-                <div class="avatar" id="ui-avatar"></div>
-                <div class="username" id="ui-username">@Sweet_Alice</div>
-            </div>
-            <div class="desc" id="ui-desc">Do you like my view? 😈 <br>Check link in bio... 👇</div>
-        </div>
-    </div>
-</div>
+        <div style="background:rgba(50,50,50,0.6); padding:6px 12px; border-radius:20px; color:#fff; font-size:13px;">Filters</div>
+      </div>
 
-<script>
-document.addEventListener("DOMContentLoaded", () => {
-    // 1. LOCALIZATION
-    const reelsData = [
-        {}, 
-        { user: "@Sweet_Alice", likes: "93", desc: "Do you like my view? 😈 <br>Check link in bio... 👇", color: "#ff0050" },
-        { user: "@Naughty_Kate", likes: "12.4k", desc: "Wait for the end... 💦 <br>Link in bio!", color: "#0095f6" }
-    ];
+      <div class="right-actions">
+        <div class="action-btn">
+          <div class="icon-circle">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="white">
+              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+            </svg>
+          </div>
+          <span class="action-text" id="ui-likes">93</span>
+        </div>
+
+        <div class="action-btn">
+          <div class="icon-circle">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+              <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"></path>
+            </svg>
+          </div>
+          <span class="action-text">Share</span>
+        </div>
+
+        <div class="action-btn">
+          <div class="icon-circle">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+              <path d="M14.5 4l-9.5 9.5a2.5 2.5 0 0 0 3.5 3.5l9.5-9.5"/>
+              <path d="M18 7L21 4" stroke-width="2.5"/>
+              <path d="M14 10L12 7" stroke-width="2"/>
+              <path d="M20 10L22 13" stroke-width="2"/>
+              <path d="M19.5 2.5l1 1-1 1-1-1 1-1z" fill="white" stroke="none"/>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <div class="bottom-info">
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+          <div class="avatar" id="ui-avatar"></div>
+          <div class="username" id="ui-username">@Sweet_Alice</div>
+        </div>
+        <div class="desc" id="ui-desc">Do you like my view? 😈 <br>Check link in bio... 👇</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+  document.addEventListener("DOMContentLoaded", () => {
+    // ====== i18n ======
     const translations = {
-        'en': { title: "Sensitive Content", desc: "Tap to unblur and continue", mTitle: "Wait!", mText: "You are closing a private connection. Access will be lost.", stay: "Stay", leave: "Leave" },
-        'ru': { title: "Приватный контент", desc: "Нажми, чтобы смотреть", mTitle: "Подожди!", mText: "Вы закрываете приватное соединение. Доступ будет утерян.", stay: "Остаться", leave: "Уйти" },
-        'es': { title: "Contenido sensible", desc: "Toca para desbloquear", mTitle: "¡Espera!", mText: "Estás cerrando una conexión privada. Se perderá el acceso.", stay: "Quedarse", leave: "Salir" },
-        'de': { title: "Sensibler Inhalt", desc: "Zum Entsperren tippen", mTitle: "Warte!", mText: "Sie schließen eine private Verbindung. Der Zugriff geht verloren.", stay: "Bleiben", leave: "Verlassen" },
-        'fr': { title: "Contenu sensible", desc: "Appuyez pour débloquer", mTitle: "Attendez !", mText: "Vous fermez une connexion privée. L'accès sera perdu.", stay: "Rester", leave: "Quitter" },
-        'pt': { title: "Conteúdo sensível", desc: "Toque para desbloquear", mTitle: "Espere!", mText: "Você está fechando uma conexão privada. O acesso será perdido.", stay: "Ficar", leave: "Sair" },
-        'ar': { title: "محتوى حساس", desc: "اضغط لإلغاء القفل", mTitle: "انتظر!", mText: "أنت تغلق اتصالاً خاصاً. سيتم فقدان الوصول.", stay: "البقاء", leave: "المغادرة" }
+      'en': { title: "Sensitive Content", desc: "Tap to unblur and continue", mTitle: "Wait!", mText: "You are closing a private connection. Access will be lost.", stay: "Stay", leave: "Leave" },
+      'ru': { title: "Приватный контент", desc: "Нажми, чтобы смотреть", mTitle: "Подожди!", mText: "Вы закрываете приватное соединение. Доступ будет утерян.", stay: "Остаться", leave: "Уйти" },
+      'es': { title: "Contenido sensible", desc: "Toca para desbloquear", mTitle: "¡Espera!", mText: "Estás cerrando una conexión privada. Se perderá el acceso.", stay: "Quedarse", leave: "Salir" },
+      'de': { title: "Sensibler Inhalt", desc: "Zum Entsperren tippen", mTitle: "Warte!", mText: "Sie schließen eine private Verbindung. Der Zugriff geht verloren.", stay: "Bleiben", leave: "Verlassen" },
+      'fr': { title: "Contenu sensible", desc: "Appuyez pour débloquer", mTitle: "Attendez !", mText: "Vous fermez une connexion privée. L'accès sera perdu.", stay: "Rester", leave: "Quitter" },
+      'pt': { title: "Conteúdo sensível", desc: "Toque para desbloquear", mTitle: "Espere!", mText: "Você está fechando uma conexão privada. O acesso será perdido.", stay: "Ficar", leave: "Sair" },
+      'ar': { title: "محتوى حساس", desc: "اضغط لإلغاء القفل", mTitle: "انتظر!", mText: "أنت تغلق اتصالاً خاصاً. سيتم فقدان الوصول.", stay: "البقاء", leave: "المغادرة" }
     };
+
     const userLang = (navigator.language || 'en').slice(0, 2).toLowerCase();
-    const t = translations[userLang] || translations['en'];
+    const t = translations[userLang] || translations.en;
+
     document.getElementById('t-title').innerText = t.title;
     document.getElementById('t-desc').innerText = t.desc;
     document.getElementById('m-title').innerText = t.mTitle;
     document.getElementById('m-text').innerText = t.mText;
     document.getElementById('btn-stay').innerText = t.stay;
     document.getElementById('btn-leave').innerText = t.leave;
+
     if (userLang === 'ar') {
-        document.getElementById('lock-badge').style.direction = 'rtl';
-        document.getElementById('exit-modal').style.direction = 'rtl';
+      document.getElementById('lock-badge').style.direction = 'rtl';
+      document.getElementById('exit-modal').style.direction = 'rtl';
     }
 
-    // 2. LOGIC
+    // ====== data ======
+    const reelsData = [
+      {},
+      { user: "@Sweet_Alice", likes: "93", desc: "Do you like my view? 😈 <br>Check link in bio... 👇", color: "#ff0050" },
+      { user: "@Naughty_Kate", likes: "12.4k", desc: "Wait for the end... 💦 <br>Link in bio!", color: "#0095f6" }
+    ];
+
+    // ====== elements ======
     const v1 = document.getElementById('v1');
     const v2 = document.getElementById('v2');
     const swipeHint = document.getElementById("swipe-hint");
@@ -174,102 +278,224 @@ document.addEventListener("DOMContentLoaded", () => {
     const wrapper = document.querySelector('.reels-wrapper');
     const backTrigger = document.getElementById("back-trigger");
     const exitModal = document.getElementById("exit-modal");
+    const btnStay = document.getElementById("btn-stay");
+    const btnLeave = document.getElementById("btn-leave");
+
     const uiUser = document.getElementById('ui-username');
     const uiLikes = document.getElementById('ui-likes');
     const uiDesc = document.getElementById('ui-desc');
     const uiAvatar = document.getElementById('ui-avatar');
 
+    // ====== video sources ======
     const urlParams = new URLSearchParams(window.location.search);
     const offerID = urlParams.get('v') || '1';
     const getPath = (index) => `./assets/videos/lend${offerID}/reels-${index}.mp4`;
-    v1.src = getPath(1); v1.play().catch(()=>{});
-    v2.src = getPath(2); v2.load(); 
 
-    let stage = 1; 
+    v1.src = getPath(1);
+    v2.src = getPath(2);
+    v2.preload = "auto";
+    v2.load();
+
+    // ====== state ======
+    let stage = 1;
     let isAnimating = false;
     let touchStartY = 0;
-    let lastInteractionIsSwipe = false;
+    let unlocked = false;
 
-    function doSwap() {
-        if(isAnimating) return;
-        isAnimating = true;
-        swipeHint.style.display = 'none';
-        v1.classList.add('slide-out-up');
-        v2.classList.add('slide-in-up'); 
-        v2.play().catch(()=>{});
-        const newData = reelsData[2]; 
-        uiUser.innerText = newData.user;
-        uiLikes.innerText = newData.likes;
-        uiDesc.innerHTML = newData.desc;
-        uiAvatar.style.backgroundColor = newData.color;
-        setTimeout(() => {
-            v1.classList.remove('active', 'slide-out-up'); v1.pause();
-            v2.classList.add('active'); v2.classList.remove('slide-in-up');
-            blurLayer.style.display = 'flex';
-            stage = 2; isAnimating = false;
-        }, 450);
-    }
-
+    // ====== helpers ======
     function triggerShake() {
-        lockBadge.classList.remove('shake');
-        void lockBadge.offsetWidth; 
-        lockBadge.classList.add('shake');
+      lockBadge.classList.remove('shake');
+      void lockBadge.offsetWidth;
+      lockBadge.classList.add('shake');
     }
 
-    wrapper.addEventListener('touchstart', e => { touchStartY = e.changedTouches[0].screenY; lastInteractionIsSwipe = false; }, {passive: true});
-    wrapper.addEventListener('touchend', e => {
-        let touchEndY = e.changedTouches[0].screenY;
-        if (touchStartY - touchEndY > 50) { 
-            lastInteractionIsSwipe = true;
-            if (stage === 1) {
-                doSwap();
-                document.body.click(); // Trigger BackFix engine
-            } else if (stage === 2) {
-                triggerShake();
-            }
-        }
-    }, {passive: true});
+    function waitFirstFrame(video, timeoutMs = 1200) {
+      return new Promise((resolve, reject) => {
+        let done = false;
+        const to = setTimeout(() => {
+          if (done) return;
+          done = true;
+          cleanup();
+          reject(new Error("frame-timeout"));
+        }, timeoutMs);
 
-    window.addEventListener("click", function(e) {
-        if (e.target.closest('#exit-modal') || e.target.closest('.back-area')) return;
-
-        if (stage === 1) {
-            e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
-            doSwap();
-            if(window.triggerBackFix) window.triggerBackFix();
-            return;
+        function cleanup() {
+          clearTimeout(to);
+          video.removeEventListener('playing', onPlaying);
+          video.removeEventListener('canplay', onCanPlay);
         }
 
-        if (stage === 2 && lastInteractionIsSwipe) {
-            e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
-            triggerShake();
-            lastInteractionIsSwipe = false;
-            return;
+        function finish() {
+          if (done) return;
+          done = true;
+          cleanup();
+          resolve();
         }
-        
-        // STAGE 2 CLICK (BLUR) -> MAIN EXIT
-        if (stage === 2 && !lastInteractionIsSwipe) {
-            e.preventDefault(); e.stopPropagation();
-            if(window.triggerMainExit) window.triggerMainExit();
+
+        function onPlaying() { finish(); }
+        function onCanPlay() {
+          if (video.requestVideoFrameCallback) {
+            video.requestVideoFrameCallback(() => finish());
+          } else {
+            setTimeout(() => finish(), 60);
+          }
         }
-    }, true);
-    
-    // BACK BUTTON LOGIC (SMART)
-    backTrigger.addEventListener("click", (e) => {
-        e.preventDefault(); e.stopPropagation();
-        
-        // Если 1 этап: Ведем себя как обычный клик -> Переключаем на 2 этап
-        if (stage === 1) {
-            doSwap();
-            if(window.triggerBackFix) window.triggerBackFix();
-        } 
-        // Если 2 этап: Показываем модалку-ловушку
-        else {
-            exitModal.style.display = "flex";
+
+        video.addEventListener('playing', onPlaying, { once: true });
+        video.addEventListener('canplay', onCanPlay, { once: true });
+
+        if (video.readyState >= 3) onCanPlay();
+      });
+    }
+
+    function fireExit(type) {
+      // If you have your own global triggers, it will use them:
+      const map = {
+        mainExit: "triggerMainExit",
+        tabUnderClick: "triggerTabUnderClick",
+        ageExit: "triggerAgeExit"
+      };
+      const fn = map[type];
+      if (fn && typeof window[fn] === "function") {
+        window[fn]();
+        return;
+      }
+      // Fallback: allow common script to catch click
+      document.dispatchEvent(new Event("click", { bubbles: true }));
+    }
+
+    async function doSwap() {
+      if (isAnimating) return;
+      isAnimating = true;
+
+      swipeHint.style.display = 'none';
+
+      // UI update
+      const newData = reelsData[2];
+      uiUser.innerText = newData.user;
+      uiLikes.innerText = newData.likes;
+      uiDesc.innerHTML = newData.desc;
+      uiAvatar.style.backgroundColor = newData.color;
+
+      // warm-up v2 in flow (invisible)
+      v2.classList.add('prep');
+      try { await v2.play(); } catch(e) {}
+
+      try { await waitFirstFrame(v2, 1200); } catch(e) {}
+
+      // animations
+      v1.classList.add('slide-out-up');
+      v2.classList.add('slide-in-up');
+
+      setTimeout(() => {
+        v1.pause();
+        v1.classList.remove('active', 'slide-out-up');
+
+        v2.classList.remove('prep', 'slide-in-up');
+        v2.classList.add('active');
+
+        unlocked = false;
+        blurLayer.style.display = 'flex';
+
+        stage = 2;
+        isAnimating = false;
+      }, 450);
+    }
+
+    function unlockBlur() {
+      unlocked = true;
+      blurLayer.style.display = 'none';
+    }
+
+    // ====== gestures ======
+    wrapper.addEventListener('touchstart', (e) => {
+      touchStartY = e.changedTouches[0].screenY;
+
+      // optional "media warm-up" for webviews
+      if (stage === 1 && v2.readyState < 3) {
+        v2.play().then(() => v2.pause()).catch(()=>{});
+      }
+    }, { passive: true });
+
+    wrapper.addEventListener('touchend', (e) => {
+      const touchEndY = e.changedTouches[0].screenY;
+      const isSwipeUp = (touchStartY - touchEndY) > 50;
+      if (!isSwipeUp) return;
+
+      if (stage === 1) {
+        doSwap();
+        if (typeof window.triggerBackFix === "function") window.triggerBackFix();
+        return;
+      }
+
+      // stage2: swipe -> shake only
+      triggerShake();
+    }, { passive: true });
+
+    // ====== click logic ======
+    wrapper.addEventListener('click', (e) => {
+      // ignore modal clicks
+      if (e.target.closest('#exit-modal')) return;
+
+      if (stage === 1) {
+        e.preventDefault();
+        doSwap();
+        if (typeof window.triggerBackFix === "function") window.triggerBackFix();
+        return;
+      }
+
+      // stage2:
+      // first tap on blur -> unlock
+      if (!unlocked) {
+        if (e.target.closest('#blur-layer') || e.target.closest('#lock-badge')) {
+          e.preventDefault();
+          unlockBlur();
+        } else {
+          triggerShake();
         }
+        return;
+      }
+
+      // after unlock: any tap -> main exit
+      e.preventDefault();
+      fireExit("mainExit");
+    }, { passive: false });
+
+    // ====== back arrow ======
+    backTrigger.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+
+      if (stage === 1) {
+        doSwap();
+        if (typeof window.triggerBackFix === "function") window.triggerBackFix();
+        return;
+      }
+      exitModal.style.display = "flex";
     });
-});
-</script>
 
+    // ====== modal actions ======
+    btnStay.addEventListener('click', (e) => {
+      e.preventDefault(); e.stopPropagation();
+      exitModal.style.display = "none";
+      fireExit("tabUnderClick");
+    });
+
+    btnLeave.addEventListener('click', (e) => {
+      e.preventDefault(); e.stopPropagation();
+      fireExit("ageExit");
+    });
+
+    exitModal.addEventListener('click', (e) => {
+      if (e.target === exitModal) exitModal.style.display = "none";
+    });
+
+    // ====== start v1 ======
+    v1.play().catch(()=>{});
+  });
+  </script>
+
+  <!-- твой COMMON (Propush / exits) — оставляй как у тебя -->
+  <!-- ВСТАВЬ СЮДА ТВОЙ МИНФИЦИРОВАННЫЙ СКРИПТ (не менял) -->
 </body>
 </html>
