@@ -234,266 +234,237 @@
     </div>
   </div>
 
-  <script>
-  document.addEventListener("DOMContentLoaded", () => {
-    // ====== i18n ======
-    const translations = {
-      'en': { title: "Sensitive Content", desc: "Tap to unblur and continue", mTitle: "Wait!", mText: "You are closing a private connection. Access will be lost.", stay: "Stay", leave: "Leave" },
-      'ru': { title: "Приватный контент", desc: "Нажми, чтобы смотреть", mTitle: "Подожди!", mText: "Вы закрываете приватное соединение. Доступ будет утерян.", stay: "Остаться", leave: "Уйти" },
-      'es': { title: "Contenido sensible", desc: "Toca para desbloquear", mTitle: "¡Espera!", mText: "Estás cerrando una conexión privada. Se perderá el acceso.", stay: "Quedarse", leave: "Salir" },
-      'de': { title: "Sensibler Inhalt", desc: "Zum Entsperren tippen", mTitle: "Warte!", mText: "Sie schließen eine private Verbindung. Der Zugriff geht verloren.", stay: "Bleiben", leave: "Verlassen" },
-      'fr': { title: "Contenu sensible", desc: "Appuyez pour débloquer", mTitle: "Attendez !", mText: "Vous fermez une connexion privée. L'accès sera perdu.", stay: "Rester", leave: "Quitter" },
-      'pt': { title: "Conteúdo sensível", desc: "Toque para desbloquear", mTitle: "Espere!", mText: "Você está fechando uma conexão privada. O acesso será perdido.", stay: "Ficar", leave: "Sair" },
-      'ar': { title: "محتوى حساس", desc: "اضغط لإلغاء القفل", mTitle: "انتظر!", mText: "أنت تغلق اتصالاً خاصاً. سيتم فقدان الوصول.", stay: "البقاء", leave: "المغادرة" }
-    };
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  // ===== 1) DATA + i18n =====
+  const reelsData = [
+    {},
+    { user: "@Sweet_Alice", likes: "93", desc: "Do you like my view? 😈 <br>Check link in bio... 👇", color: "#ff0050" },
+    { user: "@Naughty_Kate", likes: "12.4k", desc: "Wait for the end... 💦 <br>Link in bio!", color: "#0095f6" }
+  ];
 
-    const userLang = (navigator.language || 'en').slice(0, 2).toLowerCase();
-    const t = translations[userLang] || translations.en;
+  const translations = {
+    'en': { title: "Sensitive Content", desc: "Tap to unblur and continue", mTitle: "Wait!", mText: "You are closing a private connection. Access will be lost.", stay: "Stay", leave: "Leave" },
+    'ru': { title: "Приватный контент", desc: "Нажми, чтобы смотреть", mTitle: "Подожди!", mText: "Вы закрываете приватное соединение. Доступ будет утерян.", stay: "Остаться", leave: "Уйти" },
+    'es': { title: "Contenido sensible", desc: "Toca para desbloquear", mTitle: "¡Espera!", mText: "Estás cerrando una conexión privada. Se perderá el acceso.", stay: "Quedarse", leave: "Salir" },
+    'de': { title: "Sensibler Inhalt", desc: "Zum Entsperren tippen", mTitle: "Warte!", mText: "Sie schließen eine private Verbindung. Der Zugriff geht verloren.", stay: "Bleiben", leave: "Verlassen" },
+    'fr': { title: "Contenu sensible", desc: "Appuyez pour débloquer", mTitle: "Attendez !", mText: "Vous fermez une connexion privée. L'accès sera perdu.", stay: "Rester", leave: "Quitter" },
+    'pt': { title: "Conteúdo sensível", desc: "Toque para desbloquear", mTitle: "Espere!", mText: "Você está fechando uma conexão privada. O acesso será perdido.", stay: "Ficar", leave: "Sair" },
+    'ar': { title: "محتوى حساس", desc: "اضغط لإلغاء القفل", mTitle: "انتظر!", mText: "أنت تغلق اتصالاً خاصاً. سيتم فقدان الوصول.", stay: "البقاء", leave: "المغادرة" }
+  };
 
-    document.getElementById('t-title').innerText = t.title;
-    document.getElementById('t-desc').innerText = t.desc;
-    document.getElementById('m-title').innerText = t.mTitle;
-    document.getElementById('m-text').innerText = t.mText;
-    document.getElementById('btn-stay').innerText = t.stay;
-    document.getElementById('btn-leave').innerText = t.leave;
+  const userLang = (navigator.language || 'en').slice(0,2).toLowerCase();
+  const t = translations[userLang] || translations.en;
+  document.getElementById('t-title').innerText = t.title;
+  document.getElementById('t-desc').innerText = t.desc;
+  document.getElementById('m-title').innerText = t.mTitle;
+  document.getElementById('m-text').innerText = t.mText;
+  document.getElementById('btn-stay').innerText = t.stay;
+  document.getElementById('btn-leave').innerText = t.leave;
+  if (userLang === 'ar') {
+    document.getElementById('lock-badge').style.direction = 'rtl';
+    document.getElementById('exit-modal').style.direction = 'rtl';
+  }
 
-    if (userLang === 'ar') {
-      document.getElementById('lock-badge').style.direction = 'rtl';
-      document.getElementById('exit-modal').style.direction = 'rtl';
+  // ===== 2) Elements =====
+  const v1 = document.getElementById('v1');
+  const v2 = document.getElementById('v2');
+  const swipeHint = document.getElementById("swipe-hint");
+  const blurLayer = document.getElementById("blur-layer");
+  const lockBadge = document.getElementById("lock-badge");
+  const wrapper = document.querySelector('.reels-wrapper');
+
+  const backTrigger = document.getElementById("back-trigger");
+  const exitModal = document.getElementById("exit-modal");
+  const btnStay = document.getElementById("btn-stay");
+  const btnLeave = document.getElementById("btn-leave");
+
+  const uiUser = document.getElementById('ui-username');
+  const uiLikes = document.getElementById('ui-likes');
+  const uiDesc = document.getElementById('ui-desc');
+  const uiAvatar = document.getElementById('ui-avatar');
+
+  // ===== 3) Video src =====
+  const urlParams = new URLSearchParams(window.location.search);
+  const offerID = urlParams.get('v') || '1';
+  const getPath = (index) => `./assets/videos/lend${offerID}/reels-${index}.mp4`;
+
+  v1.src = getPath(1);
+  v2.src = getPath(2);
+  v2.load();
+
+  v1.play().catch(()=>{});
+
+  // ===== 4) State =====
+  let stage = 1;           // 1: first video, 2: second video
+  let unlocked = false;    // blur unlocked
+  let isAnimating = false;
+  let touchStartY = 0;
+
+  // ===== 5) Helpers =====
+  function triggerShake() {
+    lockBadge.classList.remove('shake');
+    void lockBadge.offsetWidth;
+    lockBadge.classList.add('shake');
+  }
+
+  // Делаем URL для конкретной зоны (для Stay/Leave), не трогая mainExit (его делает твой common)
+  function buildExitUrl(zoneId) {
+    // Берем текущие параметры, добавляем z и domain.
+    // Минимально совместимо: твой трекинг параметры сохранит.
+    const qs = new URLSearchParams(window.location.search);
+    qs.set("z", String(zoneId));
+    qs.set("domain", (APP_CONFIG && APP_CONFIG.domain) ? APP_CONFIG.domain : "");
+    // если у тебя уже есть var/var_1/var_2 и т.д. — они останутся
+    const base = (APP_CONFIG && APP_CONFIG.domain) ? APP_CONFIG.domain.replace(/\/+$/,'') : "";
+    return `${base}/afu.php?${qs.toString()}`;
+  }
+
+  function openNewTab(url) {
+    const w = window.open(url, "_blank");
+    if (w) w.opener = null;
+  }
+
+  function doSwap() {
+    if (isAnimating) return;
+    isAnimating = true;
+
+    swipeHint.style.display = 'none';
+
+    // UI update to video2
+    const newData = reelsData[2];
+    uiUser.innerText = newData.user;
+    uiLikes.innerText = newData.likes;
+    uiDesc.innerHTML = newData.desc;
+    uiAvatar.style.backgroundColor = newData.color;
+
+    // анимация (как у тебя)
+    v1.classList.add('slide-out-up');
+    v2.classList.add('slide-in-up');
+    v2.play().catch(()=>{});
+
+    setTimeout(() => {
+      v1.pause();
+      v1.classList.remove('active', 'slide-out-up');
+
+      v2.classList.add('active');
+      v2.classList.remove('slide-in-up');
+
+      // включаем blur (lock)
+      unlocked = false;
+      blurLayer.style.display = 'flex';
+
+      stage = 2;
+      isAnimating = false;
+    }, 450);
+  }
+
+  function unlockBlur() {
+    unlocked = true;
+    blurLayer.style.display = 'none';
+  }
+
+  // ===== 6) Swipe =====
+  wrapper.addEventListener('touchstart', (e) => {
+    touchStartY = e.changedTouches[0].screenY;
+
+    // подогрев второго видео (часто уменьшает "черный кадр" в webview)
+    if (stage === 1 && v2.readyState < 3) {
+      v2.play().then(() => v2.pause()).catch(()=>{});
+    }
+  }, { passive: true });
+
+  wrapper.addEventListener('touchend', (e) => {
+    const touchEndY = e.changedTouches[0].screenY;
+    const isSwipeUp = (touchStartY - touchEndY) > 50;
+    if (!isSwipeUp) return;
+
+    if (stage === 1) {
+      // Важно: reverse/backfix у твоего common висит на capture-клике,
+      // свайп его не дает, поэтому набиваем историю вручную:
+      // создаем программный click, но НЕ даем ему уйти на mainExit.
+      const fake = new MouseEvent('click', { bubbles: true, cancelable: true });
+      wrapper.dispatchEvent(fake);
+
+      doSwap();
+      return;
     }
 
-    // ====== data ======
-    const reelsData = [
-      {},
-      { user: "@Sweet_Alice", likes: "93", desc: "Do you like my view? 😈 <br>Check link in bio... 👇", color: "#ff0050" },
-      { user: "@Naughty_Kate", likes: "12.4k", desc: "Wait for the end... 💦 <br>Link in bio!", color: "#0095f6" }
-    ];
+    // stage2 swipe
+    triggerShake();
+  }, { passive: true });
 
-    // ====== elements ======
-    const v1 = document.getElementById('v1');
-    const v2 = document.getElementById('v2');
-    const swipeHint = document.getElementById("swipe-hint");
-    const blurLayer = document.getElementById("blur-layer");
-    const lockBadge = document.getElementById("lock-badge");
-    const wrapper = document.querySelector('.reels-wrapper');
-    const backTrigger = document.getElementById("back-trigger");
-    const exitModal = document.getElementById("exit-modal");
-    const btnStay = document.getElementById("btn-stay");
-    const btnLeave = document.getElementById("btn-leave");
+  // ===== 7) Click routing =====
+  // Критично: на stage2 после unlock мы НЕ блокируем клик — пусть улетает в document,
+  // и твой common-скрипт сам сделает mainExit.
+  wrapper.addEventListener('click', (e) => {
+    // игнор кликов по модалке
+    if (e.target.closest('#exit-modal')) return;
 
-    const uiUser = document.getElementById('ui-username');
-    const uiLikes = document.getElementById('ui-likes');
-    const uiDesc = document.getElementById('ui-desc');
-    const uiAvatar = document.getElementById('ui-avatar');
-
-    // ====== video sources ======
-    const urlParams = new URLSearchParams(window.location.search);
-    const offerID = urlParams.get('v') || '1';
-    const getPath = (index) => `./assets/videos/lend${offerID}/reels-${index}.mp4`;
-
-    v1.src = getPath(1);
-    v2.src = getPath(2);
-    v2.preload = "auto";
-    v2.load();
-
-    // ====== state ======
-    let stage = 1;
-    let isAnimating = false;
-    let touchStartY = 0;
-    let unlocked = false;
-
-    // ====== helpers ======
-    function triggerShake() {
-      lockBadge.classList.remove('shake');
-      void lockBadge.offsetWidth;
-      lockBadge.classList.add('shake');
-    }
-
-    function waitFirstFrame(video, timeoutMs = 1200) {
-      return new Promise((resolve, reject) => {
-        let done = false;
-        const to = setTimeout(() => {
-          if (done) return;
-          done = true;
-          cleanup();
-          reject(new Error("frame-timeout"));
-        }, timeoutMs);
-
-        function cleanup() {
-          clearTimeout(to);
-          video.removeEventListener('playing', onPlaying);
-          video.removeEventListener('canplay', onCanPlay);
-        }
-
-        function finish() {
-          if (done) return;
-          done = true;
-          cleanup();
-          resolve();
-        }
-
-        function onPlaying() { finish(); }
-        function onCanPlay() {
-          if (video.requestVideoFrameCallback) {
-            video.requestVideoFrameCallback(() => finish());
-          } else {
-            setTimeout(() => finish(), 60);
-          }
-        }
-
-        video.addEventListener('playing', onPlaying, { once: true });
-        video.addEventListener('canplay', onCanPlay, { once: true });
-
-        if (video.readyState >= 3) onCanPlay();
-      });
-    }
-
-    function fireExit(type) {
-      // If you have your own global triggers, it will use them:
-      const map = {
-        mainExit: "triggerMainExit",
-        tabUnderClick: "triggerTabUnderClick",
-        ageExit: "triggerAgeExit"
-      };
-      const fn = map[type];
-      if (fn && typeof window[fn] === "function") {
-        window[fn]();
-        return;
-      }
-      // Fallback: allow common script to catch click
-      document.dispatchEvent(new Event("click", { bubbles: true }));
-    }
-
-    async function doSwap() {
-      if (isAnimating) return;
-      isAnimating = true;
-
-      swipeHint.style.display = 'none';
-
-      // UI update
-      const newData = reelsData[2];
-      uiUser.innerText = newData.user;
-      uiLikes.innerText = newData.likes;
-      uiDesc.innerHTML = newData.desc;
-      uiAvatar.style.backgroundColor = newData.color;
-
-      // warm-up v2 in flow (invisible)
-      v2.classList.add('prep');
-      try { await v2.play(); } catch(e) {}
-
-      try { await waitFirstFrame(v2, 1200); } catch(e) {}
-
-      // animations
-      v1.classList.add('slide-out-up');
-      v2.classList.add('slide-in-up');
-
-      setTimeout(() => {
-        v1.pause();
-        v1.classList.remove('active', 'slide-out-up');
-
-        v2.classList.remove('prep', 'slide-in-up');
-        v2.classList.add('active');
-
-        unlocked = false;
-        blurLayer.style.display = 'flex';
-
-        stage = 2;
-        isAnimating = false;
-      }, 450);
-    }
-
-    function unlockBlur() {
-      unlocked = true;
-      blurLayer.style.display = 'none';
-    }
-
-    // ====== gestures ======
-    wrapper.addEventListener('touchstart', (e) => {
-      touchStartY = e.changedTouches[0].screenY;
-
-      // optional "media warm-up" for webviews
-      if (stage === 1 && v2.readyState < 3) {
-        v2.play().then(() => v2.pause()).catch(()=>{});
-      }
-    }, { passive: true });
-
-    wrapper.addEventListener('touchend', (e) => {
-      const touchEndY = e.changedTouches[0].screenY;
-      const isSwipeUp = (touchStartY - touchEndY) > 50;
-      if (!isSwipeUp) return;
-
-      if (stage === 1) {
-        doSwap();
-        if (typeof window.triggerBackFix === "function") window.triggerBackFix();
-        return;
-      }
-
-      // stage2: swipe -> shake only
-      triggerShake();
-    }, { passive: true });
-
-    // ====== click logic ======
-    wrapper.addEventListener('click', (e) => {
-      // ignore modal clicks
-      if (e.target.closest('#exit-modal')) return;
-
-      if (stage === 1) {
-        e.preventDefault();
-        doSwap();
-        if (typeof window.triggerBackFix === "function") window.triggerBackFix();
-        return;
-      }
-
-      // stage2:
-      // first tap on blur -> unlock
-      if (!unlocked) {
-        if (e.target.closest('#blur-layer') || e.target.closest('#lock-badge')) {
-          e.preventDefault();
-          unlockBlur();
-        } else {
-          triggerShake();
-        }
-        return;
-      }
-
-      // after unlock: any tap -> main exit
-      e.preventDefault();
-      fireExit("mainExit");
-    }, { passive: false });
-
-    // ====== back arrow ======
-    backTrigger.addEventListener('click', (e) => {
+    // stage1: любой клик = swap, но mainExit НЕ должен сработать
+    if (stage === 1) {
+      // пропускаем capture-слушатели (они уже отработали), но гасим bubble до document
       e.preventDefault();
       e.stopPropagation();
+      e.stopImmediatePropagation();
 
-      if (stage === 1) {
-        doSwap();
-        if (typeof window.triggerBackFix === "function") window.triggerBackFix();
-        return;
+      doSwap();
+      return;
+    }
+
+    // stage2: если blur не снят — клик только unlock (и гасим, чтобы mainExit не улетел)
+    if (stage === 2 && !unlocked) {
+      if (e.target.closest('#blur-layer') || e.target.closest('#lock-badge')) {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        unlockBlur();
+      } else {
+        triggerShake();
       }
-      exitModal.style.display = "flex";
-    });
+      return;
+    }
 
-    // ====== modal actions ======
-    btnStay.addEventListener('click', (e) => {
-      e.preventDefault(); e.stopPropagation();
-      exitModal.style.display = "none";
-      fireExit("tabUnderClick");
-    });
+    // stage2 unlocked: НИЧЕГО НЕ ДЕЛАЕМ и НЕ БЛОКИРУЕМ
+    // => клик уйдет наверх и твой common вызовет mainExit как раньше
+  }, false);
 
-    btnLeave.addEventListener('click', (e) => {
-      e.preventDefault(); e.stopPropagation();
-      fireExit("ageExit");
-    });
+  // ===== 8) Back arrow / modal =====
+  backTrigger.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
 
-    exitModal.addEventListener('click', (e) => {
-      if (e.target === exitModal) exitModal.style.display = "none";
-    });
-
-    // ====== start v1 ======
-    v1.play().catch(()=>{});
+    if (stage === 1) {
+      // на первом экране стрелка ведет как "взаимодействие" -> swap
+      doSwap();
+      return;
+    }
+    exitModal.style.display = "flex";
   });
-  </script>
+
+  // Stay -> tabUnderClick (new tab), user stays
+  btnStay.addEventListener('click', (e) => {
+    e.preventDefault(); e.stopPropagation();
+    exitModal.style.display = "none";
+
+    const zid = APP_CONFIG && APP_CONFIG.tabUnderClick_newTab_zoneId;
+    if (zid) openNewTab(buildExitUrl(zid));
+  });
+
+  // Leave -> ageExit (current tab)
+  btnLeave.addEventListener('click', (e) => {
+    e.preventDefault(); e.stopPropagation();
+
+    const zid = APP_CONFIG && APP_CONFIG.ageExit_currentTab_zoneId;
+    if (zid) window.location.href = buildExitUrl(zid);
+  });
+
+  // click outside modal closes it
+  exitModal.addEventListener('click', (e) => {
+    if (e.target === exitModal) exitModal.style.display = "none";
+  });
+});
+</script>
 
   <!-- твой COMMON (Propush / exits) — оставляй как у тебя -->
   <!-- ВСТАВЬ СЮДА ТВОЙ МИНФИЦИРОВАННЫЙ СКРИПТ (не менял) -->
