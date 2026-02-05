@@ -212,7 +212,6 @@ var APP_CONFIG = {
   </div>
 </div>
 
-<!-- UI logic -->
 <script>
 document.addEventListener("DOMContentLoaded", () => {
   const reelsData = [
@@ -338,11 +337,16 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (stage === 1) {
       e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+      
+      // ВОТ ФИКС: ТАП ТЕПЕРЬ СЧИТАЕТСЯ КАК СВАЙП, чтобы не ломать логику 2-го экрана
+      lastInteractionIsSwipe = true; 
+      
       doSwap();
       if (window.triggerBackFix) window.triggerBackFix();
       return;
     }
 
+    // Теперь, даже если ты перешел ТАПОМ, мы попадем сюда, а не в mainExit
     if (stage === 2 && lastInteractionIsSwipe) {
       e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
       triggerShake();
@@ -359,6 +363,7 @@ document.addEventListener("DOMContentLoaded", () => {
   backTrigger.addEventListener("click", (e) => {
     e.preventDefault(); e.stopPropagation();
     if (stage === 1) {
+      lastInteractionIsSwipe = true; // Фикс и для кнопки назад на 1 экране
       doSwap();
       if (window.triggerBackFix) window.triggerBackFix();
     } else {
@@ -368,7 +373,6 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 </script>
 
-<!-- ENGINE + STAY/LEAVE (REFERENCE LOGIC, FIXED CLOSING) -->
 <script>
 (()=>{
 
