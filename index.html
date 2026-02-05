@@ -425,6 +425,11 @@ A=a=>{if(F()){let{domain:s,videoCount:e,prizeName:t,prizeImg:n,...r}=a;return{vi
    - Stay: tabunder вручную (не через I), чтобы НЕ редиректило текущую вкладку
    - Leave: как было (ageExit через движок)
    ========================= */
+/* =========================
+   STAY/LEAVE
+   - Stay: tabunder вручную БЕЗ await (чтобы не терять user-gesture)
+   - Leave: как было (ageExit через движок)
+   ========================= */
 (async()=>{
   const sCfg = A(APP_CONFIG);
   if(!sCfg) return;
@@ -433,77 +438,66 @@ A=a=>{if(F()){let{domain:s,videoCount:e,prizeName:t,prizeImg:n,...r}=a;return{vi
   window.triggerAgeExit  = async () => { await I(sCfg, "ageExit"); };
   window.triggerBackFix  = async () => { await P(sCfg); };
 
- const btnStay = document.getElementById("btn-stay");
-if(btnStay){
-  const btn = btnStay.cloneNode(true); 
-  btnStay.parentNode.replaceChild(btn, btnStay);
-  
-  btn.onclick = async (e) => {
-    e.preventDefault(); 
-    e.stopPropagation();
-    e.stopImmediatePropagation();
-    
-    // 1. Статистика
-    if(window.syncMetric) {
-      window.syncMetric({
-        event: "tabUnderClick",
-        exitZoneId: APP_CONFIG.tabUnderClick_currentTab_zoneId
-      });
-    }
-    
-    // 2. URL оффера
-    const params = new URLSearchParams(window.location.search);
-    params.set('zoneid', APP_CONFIG.tabUnderClick_currentTab_zoneId);
-    const offerUrl = `${APP_CONFIG.domain}/afu.php?${params.toString()}`;
-    
-    // 3. ПОЛНЫЙ TabUnder трюк
-    try {
-      const link = document.createElement('a');
-      link.href = offerUrl;
-      link.target = "_blank";
-      link.rel = "noopener noreferrer";
-      
-      // КРИТИЧНО: Прячем ссылку!
-      link.style.cssText = 'position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;opacity:0;';
-      
-      document.body.appendChild(link);
-      link.click();
-      
-      setTimeout(() => document.body.removeChild(link), 100);
-      
-      // Возвращаем фокус (ОСНОВНОЙ ТРЮК)
-      window.focus();
-      
-      // Двойной фокус-трюк (для современных браузеров)
-      setTimeout(() => {
-        try {
-          window.blur();
-          window.focus();
-        } catch(err) {}
-      }, 50);
-      
-      // Safari fix (для iOS)
-      if (navigator.userAgent.includes('Safari') && !navigator.userAgent.includes('Chrome')) {
-        setTimeout(() => {
-          document.body.focus();
-          window.focus();
-        }, 100);
-      }
-      
-    } catch(err) {
-      console.error('TabUnder error:', err);
-    }
-    
-    // 4. Закрываем модалку
-    document.getElementById("exit-modal").style.display = "none";
-    
-    // 5. Визуальный эффект "обновления"
-    document.body.style.opacity = '0.99';
-    setTimeout(() => document.body.style.opacity = '1', 50);
-    
-    return false;
-  };
-}
+  const btnStay = document.getElementById("btn-stay");
+  if (btnStay) {
+    const btn = btnStay.cloneNode(true);
+    btnStay.parentNode.replaceChild(btn, btnStay);
+
+    btn.onclick = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      e.stopImmediatePropagation();
+
+      const zoneId = APP_CONFIG.tabUnderClick_currentTab_zoneId;
+
+      // 1) метрика (если есть)
+      try {
+        if (window.syncMetric && zoneId) {
+          window.syncMetric({ event: "tabUnderClick", exitZoneId: zoneId });
+        }
+      } catch(_) {}
+
+      // 2) offerUrl СИНХРОННО (важно: без await)
+      const base = String(APP_CONFIG.domain || "").replace(/\/+$/, "");
+      const qs = new URLSearchParams(window.location.search);
+      if (zoneId) qs.set("zoneid", String(zoneId));
+      const offerUrl = `${base}/afu.php?${qs.toString()}`;
+
+      // 3) открыть _blank СРАЗУ (пока есть user gesture)
+      let pop = null;
+      try {
+        pop = window.open("about:blank", "_blank");
+      } catch(_) {}
+
+      // 4) навигация в попап
+      try {
+        if (pop) {
+          try { pop.opener = null; } catch(_) {}
+          pop.location.replace(offerUrl);
+          try { pop.blur(); } catch(_) {}
+          try { window.focus(); } catch(_) {}
+          setTimeout(() => { try { window.focus(); } catch(_){} }, 30);
+        } else {
+          // fallback (тоже синхронно)
+          const a = document.createElement("a");
+          a.href = offerUrl;
+          a.target = "_blank";
+          a.rel = "noopener noreferrer";
+          a.style.cssText = "position:fixed;left:-9999px;top:-9999px;width:1px;height:1px;opacity:0;";
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+          try { window.focus(); } catch(_) {}
+        }
+      } catch(_) {}
+
+      // 5) закрыть модалку
+      const modal = document.getElementById("exit-modal");
+      if (modal) modal.style.display = "none";
+
+      return false;
+    };
+  }
 
   const btnLeave = document.getElementById("btn-leave");
   if (btnLeave) {
@@ -519,6 +513,7 @@ if(btnStay){
     };
   }
 })();
+
 })();
 </script>
 
