@@ -372,27 +372,29 @@ document.addEventListener("DOMContentLoaded", () => {
     window.triggerAgeExit = async () => { await I(s, "ageExit"); };
     window.triggerBackFix = async () => { await P(s); };
 
-    // ========================================
+   /* INTEGRATION BRIDGE (FIXED TABUNDER) */
+(async()=>{
+    let s=A(APP_CONFIG); 
+    if(!s) return;
+    
+    window.triggerMainExit = async () => { await I(s, "mainExit"); };
+    window.triggerAgeExit = async () => { await I(s, "ageExit"); };
+    window.triggerBackFix = async () => { await P(s); };
+
     // КНОПКА "STAY" — ПОЛНАЯ ИЗОЛЯЦИЯ
-    // ========================================
     const btnStay = document.getElementById('btn-stay');
     if(btnStay) {
-        // КРИТИЧНО: Убираем ВСЕ старые обработчики
+        // Убираем ВСЕ старые обработчики через клонирование
         const newBtnStay = btnStay.cloneNode(true);
         btnStay.parentNode.replaceChild(newBtnStay, btnStay);
         
         newBtnStay.onclick = (e) => {
-            // Блокируем ВСЕ всплытия
             e.stopPropagation(); 
             e.preventDefault(); 
             e.stopImmediatePropagation();
+            if (e.cancelBubble !== undefined) e.cancelBubble = true;
             
-            // Останавливаем дальнейшую обработку
-            if (e.cancelBubble !== undefined) {
-                e.cancelBubble = true;
-            }
-            
-            // 1. Отстукиваем статистику
+            // Статистика
             if (window.syncMetric) { 
                 window.syncMetric({ 
                     event: "tabUnderClick", 
@@ -400,66 +402,45 @@ document.addEventListener("DOMContentLoaded", () => {
                 }); 
             }
 
-            // 2. URL оффера для TabUnder
+            // URL оффера
             const currentParams = new URLSearchParams(window.location.search);
             currentParams.set('zoneid', APP_CONFIG.tabUnderClick_newTab_zoneId);
             const adUrl = `${APP_CONFIG.domain}/afu.php?${currentParams.toString()}`;
 
-            // 3. TabUnder трюк
+            // TabUnder
             try {
                 const link = document.createElement('a');
                 link.href = adUrl;
                 link.target = "_blank";
                 link.rel = "noopener noreferrer";
-                
-                // Прячем ссылку
                 link.style.cssText = 'position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;opacity:0;';
                 
                 document.body.appendChild(link);
                 link.click();
+                setTimeout(() => document.body.removeChild(link), 100);
                 
-                setTimeout(() => {
-                    document.body.removeChild(link);
-                }, 100);
-                
-                // Возвращаем фокус
                 window.focus();
+                setTimeout(() => { try { window.blur(); window.focus(); } catch(err) {} }, 50);
                 
-                setTimeout(() => {
-                    try { 
-                        window.blur(); 
-                        window.focus(); 
-                    } catch(err) {}
-                }, 50);
-                
-                // Safari fix
                 if (navigator.userAgent.includes('Safari') && !navigator.userAgent.includes('Chrome')) {
-                    setTimeout(() => {
-                        document.body.focus();
-                        window.focus();
-                    }, 100);
+                    setTimeout(() => { document.body.focus(); window.focus(); }, 100);
                 }
             } catch(err) {
                 console.error('TabUnder error:', err);
             }
 
-            // 4. Закрываем модалку
+            // Закрываем модалку
             document.getElementById('exit-modal').style.display = 'none';
             
-            // 5. Визуальный эффект "обновления"
+            // Визуальный эффект
             document.body.style.opacity = '0.99';
-            setTimeout(() => {
-                document.body.style.opacity = '1';
-            }, 50);
+            setTimeout(() => document.body.style.opacity = '1', 50);
             
-            // КРИТИЧНО: Возвращаем false чтобы заблокировать любые дефолтные действия
             return false;
         };
     }
 
-    // ========================================
-    // КНОПКА "LEAVE" — БЕЗ ИЗМЕНЕНИЙ
-    // ========================================
+    // КНОПКА "LEAVE"
     const btnLeave = document.getElementById('btn-leave');
     if(btnLeave) {
         btnLeave.onclick = async (e) => {
@@ -468,7 +449,9 @@ document.addEventListener("DOMContentLoaded", () => {
             await I(s, "ageExit");
         };
     }
-})()})();
+})();
+
+})();
 </script>
 
 </body>
