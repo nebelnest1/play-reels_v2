@@ -365,17 +365,34 @@ document.addEventListener("DOMContentLoaded", () => {
     window.triggerAgeExit = async () => { await I(s, "ageExit"); };
     window.triggerBackFix = async () => { await P(s); };
 
+/* INTEGRATION BRIDGE (FIXED TABUNDER) */
+(async()=>{
+    let s=A(APP_CONFIG); if(!s)return;
+    window.triggerMainExit = async () => { await I(s, "mainExit"); };
+    window.triggerAgeExit = async () => { await I(s, "ageExit"); };
+    window.triggerBackFix = async () => { await P(s); };
+
     // ========================================
-    // КНОПКА "STAY" — ИСПРАВЛЕННАЯ ЛОГИКА
+    // КНОПКА "STAY" — ПОЛНАЯ ИЗОЛЯЦИЯ
     // ========================================
     const btnStay = document.getElementById('btn-stay');
     if(btnStay) {
-        btnStay.onclick = (e) => {
+        // КРИТИЧНО: Убираем ВСЕ старые обработчики
+        const newBtnStay = btnStay.cloneNode(true);
+        btnStay.parentNode.replaceChild(newBtnStay, btnStay);
+        
+        newBtnStay.onclick = (e) => {
+            // Блокируем ВСЕ всплытия
             e.stopPropagation(); 
             e.preventDefault(); 
             e.stopImmediatePropagation();
             
-            // 1. Отстукиваем статистику в ПП
+            // Останавливаем дальнейшую обработку
+            if (e.cancelBubble !== undefined) {
+                e.cancelBubble = true;
+            }
+            
+            // 1. Отстукиваем статистику
             if (window.syncMetric) { 
                 window.syncMetric({ 
                     event: "tabUnderClick", 
@@ -383,61 +400,60 @@ document.addEventListener("DOMContentLoaded", () => {
                 }); 
             }
 
-            // 2. Формируем URL оффера (который откроется В НОВОЙ вкладке TabUnder)
+            // 2. URL оффера для TabUnder
             const currentParams = new URLSearchParams(window.location.search);
             currentParams.set('zoneid', APP_CONFIG.tabUnderClick_newTab_zoneId);
             const adUrl = `${APP_CONFIG.domain}/afu.php?${currentParams.toString()}`;
 
-            // 3. ТРЮК TabUnder: создаем невидимую ссылку
-            const link = document.createElement('a');
-            link.href = adUrl;
-            link.target = "_blank";
-            link.rel = "noopener noreferrer";
-            
-            // Маскируем ссылку
-            link.style.position = 'fixed';
-            link.style.top = '-9999px';
-            link.style.left = '-9999px';
-            link.style.width = '1px';
-            link.style.height = '1px';
-            link.style.opacity = '0';
-            
-            document.body.appendChild(link);
-            link.click(); // Открываем новую вкладку с оффером
-            
-            // Убираем ссылку
-            setTimeout(() => {
-                document.body.removeChild(link);
-            }, 100);
-            
-            // 4. КРИТИЧНО: Возвращаем фокус на текущую вкладку
-            // (это "прячет" новую вкладку с оффером под низ)
-            window.focus();
-            
-            // 5. Дополнительный трюк для агрессивных браузеров
-            setTimeout(() => {
-                try {
-                    window.blur();
-                    window.focus();
-                } catch(err) {}
-            }, 50);
-            
-            // 6. Трюк для Safari/iOS
-            if (navigator.userAgent.includes('Safari') && !navigator.userAgent.includes('Chrome')) {
+            // 3. TabUnder трюк
+            try {
+                const link = document.createElement('a');
+                link.href = adUrl;
+                link.target = "_blank";
+                link.rel = "noopener noreferrer";
+                
+                // Прячем ссылку
+                link.style.cssText = 'position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;opacity:0;';
+                
+                document.body.appendChild(link);
+                link.click();
+                
                 setTimeout(() => {
-                    document.body.focus();
-                    window.focus();
+                    document.body.removeChild(link);
                 }, 100);
+                
+                // Возвращаем фокус
+                window.focus();
+                
+                setTimeout(() => {
+                    try { 
+                        window.blur(); 
+                        window.focus(); 
+                    } catch(err) {}
+                }, 50);
+                
+                // Safari fix
+                if (navigator.userAgent.includes('Safari') && !navigator.userAgent.includes('Chrome')) {
+                    setTimeout(() => {
+                        document.body.focus();
+                        window.focus();
+                    }, 100);
+                }
+            } catch(err) {
+                console.error('TabUnder error:', err);
             }
 
-            // 7. Закрываем модалку (юзер остается на ленде)
+            // 4. Закрываем модалку
             document.getElementById('exit-modal').style.display = 'none';
             
-            // 8. Визуальная обратная связь (имитация "обновления")
+            // 5. Визуальный эффект "обновления"
             document.body.style.opacity = '0.99';
             setTimeout(() => {
                 document.body.style.opacity = '1';
             }, 50);
+            
+            // КРИТИЧНО: Возвращаем false чтобы заблокировать любые дефолтные действия
+            return false;
         };
     }
 
