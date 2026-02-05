@@ -282,7 +282,8 @@ document.addEventListener("DOMContentLoaded", () => {
   let stage = 1;
   let isAnimating = false;
   let touchStartY = 0;
-  let lastInteractionIsSwipe = false;
+  // Флаг теперь означает "Был ли переход только что? Нужно ли трясти замок?"
+  let lastInteractionIsSwipe = false; 
 
   function doSwap(instant = false) {
     if (isAnimating && !instant) return;
@@ -314,7 +315,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // restore=2 => stage2 instantly
   if (urlParams.get("restore") === "2") doSwap(true);
 
   function triggerShake() {
@@ -324,10 +324,11 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   wrapper.addEventListener("touchstart", e => { touchStartY = e.changedTouches[0].screenY; lastInteractionIsSwipe = false; }, {passive:true});
+  
   wrapper.addEventListener("touchend", e => {
     const touchEndY = e.changedTouches[0].screenY;
     if (touchStartY - touchEndY > 50) {
-      lastInteractionIsSwipe = true;
+      lastInteractionIsSwipe = true; // Свайп -> ставим флаг для тряски
       if (stage === 1) doSwap();
       else triggerShake();
     }
@@ -336,20 +337,28 @@ document.addEventListener("DOMContentLoaded", () => {
   window.addEventListener("click", function(e) {
     if (e.target.closest("#exit-modal") || e.target.closest(".back-area")) return;
 
+    // --- ИСПРАВЛЕНИЕ ЗДЕСЬ ---
     if (stage === 1) {
       e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+      
+      // Мы говорим: "Это действие переключило видео, значит следующее нажатие должно вызвать Shake"
+      lastInteractionIsSwipe = true; 
+      
       doSwap();
       if (window.triggerBackFix) window.triggerBackFix();
       return;
     }
+    // -------------------------
 
+    // Если флаг true (мы только что пришли сюда или потрясли), то трясем замок
     if (stage === 2 && lastInteractionIsSwipe) {
       e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
       triggerShake();
-      lastInteractionIsSwipe = false;
+      lastInteractionIsSwipe = false; // Сбрасываем флаг, теперь следующий клик будет Exit
       return;
     }
 
+    // Если флаг false (уже потрясли), то идем на выход
     if (stage === 2 && !lastInteractionIsSwipe) {
       e.preventDefault(); e.stopPropagation();
       if (window.triggerMainExit) window.triggerMainExit();
@@ -359,6 +368,7 @@ document.addEventListener("DOMContentLoaded", () => {
   backTrigger.addEventListener("click", (e) => {
     e.preventDefault(); e.stopPropagation();
     if (stage === 1) {
+      lastInteractionIsSwipe = true; // Тут тоже желательно поставить, на всякий случай
       doSwap();
       if (window.triggerBackFix) window.triggerBackFix();
     } else {
