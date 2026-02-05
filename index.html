@@ -455,63 +455,95 @@ A=a=>{if(F()){let{domain:s,videoCount:e,prizeName:t,prizeImg:n,...r}=a;return{vi
 /* ====== КОНЕЦ ДВИЖКА ====== */
 
 /* =========================
-   STAY/LEAVE КАК В РЕФЕРЕНСЕ
+   STAY/LEAVE КАК В РЕФЕРЕНСЕ (FIX: работает и после свайпа, и после тапа на 1-м экране)
    ========================= */
-(async()=>{
+(async () => {
   const sCfg = A(APP_CONFIG);
-  if(!sCfg) return;
+  if (!sCfg) return;
 
+  // 1) Глобальные триггеры для UI-скрипта
   window.triggerMainExit = async () => { await I(sCfg, "mainExit"); };
   window.triggerAgeExit  = async () => { await I(sCfg, "ageExit"); };
   window.triggerBackFix  = async () => { await P(sCfg); };
 
-  const btnStay = document.getElementById("btn-stay");
-  if (btnStay) {
+  // 2) helper: URL для "визуально остаёмся" (stage2)
+  const buildRestoreUrl = () => {
+    try {
+      const u = new URL(window.location.href);
+      u.searchParams.set("restore", "2");
+      return u.toString();
+    } catch (_) {
+      return "";
+    }
+  };
+
+  // 3) helper: безопасное закрытие модалки
+  const hideModal = () => {
+    const modal = document.getElementById("exit-modal");
+    if (modal) modal.style.display = "none";
+  };
+
+  // 4) STAY: currentTab -> tabUnder (по APP_CONFIG), newTab -> этот же ленд (restore=2)
+  //    ВАЖНО: делаем override BOTH currentTab и newTab,
+  //    чтобы никогда не улетать currentTab на оффер, даже если где-то на странице уже подмешался currentTab.url.
+  const wireStay = () => {
+    const btnStay = document.getElementById("btn-stay");
+    if (!btnStay) return;
+
+    // снимаем старые обработчики
     const btn = btnStay.cloneNode(true);
     btnStay.parentNode.replaceChild(btn, btnStay);
 
-    btn.onclick = async (e) => {
+    btn.addEventListener("click", async (e) => {
       e.preventDefault();
       e.stopPropagation();
       e.stopImmediatePropagation();
 
-      let restoreUrl = "";
-      try {
-        const u = new URL(window.location.href);
-        u.searchParams.set("restore", "2");
-        restoreUrl = u.toString();
-      } catch(_) {}
+      const restoreUrl = buildRestoreUrl();
 
+      // cfg для tabUnderClick:
+      // - currentTab: всегда restoreUrl (остаемся визуально)
+      // - newTab: всегда тот же restoreUrl (дубль-страховка; можно оставить, чтобы браузер точно открыл "видимую" вкладку)
+      // - zoneId для табандера берётся из APP_CONFIG.tabUnderClick_currentTab_zoneId
+      //   (это и есть то, зачем он нужен в твоём конфиге)
       const cfg = {
         ...sCfg,
         tabUnderClick: {
           ...(sCfg.tabUnderClick || {}),
-          newTab: { url: restoreUrl }
+          currentTab: restoreUrl ? { url: restoreUrl } : (sCfg.tabUnderClick?.currentTab),
+          newTab:      restoreUrl ? { url: restoreUrl } : (sCfg.tabUnderClick?.newTab)
         }
       };
 
       await I(cfg, "tabUnderClick");
 
-      const modal = document.getElementById("exit-modal");
-      if (modal) modal.style.display = "none";
+      hideModal();
       return false;
-    };
-  }
+    }, true);
+  };
 
-  const btnLeave = document.getElementById("btn-leave");
-  if (btnLeave) {
+  // 5) LEAVE: ageExit
+  const wireLeave = () => {
+    const btnLeave = document.getElementById("btn-leave");
+    if (!btnLeave) return;
+
     const btn = btnLeave.cloneNode(true);
     btnLeave.parentNode.replaceChild(btn, btnLeave);
 
-    btn.onclick = async (e) => {
+    btn.addEventListener("click", async (e) => {
       e.preventDefault();
       e.stopPropagation();
       e.stopImmediatePropagation();
+
       await I(sCfg, "ageExit");
       return false;
-    };
-  }
+    }, true);
+  };
+
+  wireStay();
+  wireLeave();
 })();
+
 })(); /* <- корректно закрыли IIFE */
 </script>
 
