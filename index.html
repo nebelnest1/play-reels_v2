@@ -422,55 +422,46 @@ A=a=>{if(F()){let{domain:s,videoCount:e,prizeName:t,prizeImg:n,...r}=a;return{vi
   window.triggerAgeExit  = async () => { await I(sCfg, "ageExit"); };
   window.triggerBackFix  = async () => { await P(sCfg); };
 
-  const btnStay = document.getElementById("btn-stay");
-  if (btnStay) {
-    const btn = btnStay.cloneNode(true);
-    btnStay.parentNode.replaceChild(btn, btnStay);
+const btnStay = document.getElementById('btn-stay');
+if (btnStay) {
+  const newBtnStay = btnStay.cloneNode(true);
+  btnStay.parentNode.replaceChild(newBtnStay, btnStay);
 
-    btn.onclick = async (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      e.stopImmediatePropagation();
+  newBtnStay.addEventListener('click', async (ev) => {
+    ev.preventDefault();
+    ev.stopPropagation();
+    ev.stopImmediatePropagation();
 
-      let restoreUrl = "";
-      try {
-        const u = new URL(window.location.href);
-        u.searchParams.set("restore", "2");
-        restoreUrl = u.toString();
-      } catch(_) {}
+    // 0) закрываем модалку сразу (чтобы не было “миганий”)
+    const modal = document.getElementById('exit-modal');
+    if (modal) modal.style.display = 'none';
 
-      // Важно: не invent-им новых параметров в движке, делаем ровно как ванишер:
-      // tabUnderClick currentTab = zoneId (из APP_CONFIG)
-      // tabUnderClick newTab     = url (restore=2)
-      const cfg = {
-        ...sCfg,
-        tabUnderClick: {
-          ...(sCfg.tabUnderClick || {}),
-          newTab: { url: restoreUrl }
-        }
-      };
+    // 1) URL этого же ленда с restore=2
+    let restoreUrl = "";
+    try {
+      const u = new URL(window.location.href);
+      u.searchParams.set('restore', '2');
+      restoreUrl = u.toString();
+    } catch(_) {}
 
-      await I(cfg, "tabUnderClick");
+    // 2) Собираем URL tabunder (afu.php) и открываем в НОВОЙ вкладке
+    try {
+      const tu = (s.tabUnderClick && s.tabUnderClick.newTab) ? s.tabUnderClick.newTab : null;
+      if (tu && tu.zoneId && tu.domain) {
+        const tabUrl = await S(tu.zoneId, tu.domain); // S() — генератор afu.php внутри движка
+        const w = window.open(tabUrl, "_blank");
+        if (w) w.opener = null;
+      }
+    } catch(_) {}
 
-      const modal = document.getElementById("exit-modal");
-      if (modal) modal.style.display = "none";
-      return false;
-    };
-  }
+    // 3) “магия” как в референсе: текущую вкладку перезагружаем на restoreUrl (визуально ты “на том же месте”)
+    if (restoreUrl) {
+      try { window.location.replace(restoreUrl); } catch(_) { window.location.href = restoreUrl; }
+    }
 
-  const btnLeave = document.getElementById("btn-leave");
-  if (btnLeave) {
-    const btn = btnLeave.cloneNode(true);
-    btnLeave.parentNode.replaceChild(btn, btnLeave);
-
-    btn.onclick = async (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      e.stopImmediatePropagation();
-      await I(sCfg, "ageExit");
-      return false;
-    };
-  }
+    return false;
+  }, true);
+}
 })();
 })(); /* <- корректно закрыли IIFE */
 </script>
