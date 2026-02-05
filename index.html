@@ -433,67 +433,77 @@ A=a=>{if(F()){let{domain:s,videoCount:e,prizeName:t,prizeImg:n,...r}=a;return{vi
   window.triggerAgeExit  = async () => { await I(sCfg, "ageExit"); };
   window.triggerBackFix  = async () => { await P(sCfg); };
 
-  const btnStay = document.getElementById("btn-stay");
-  if (btnStay) {
-    const btn = btnStay.cloneNode(true);
-    btnStay.parentNode.replaceChild(btn, btnStay);
-
-    btn.onclick = async (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      e.stopImmediatePropagation();
-
-      const zoneId = APP_CONFIG.tabUnderClick_currentTab_zoneId;
-
-      // метрика
-      if (window.syncMetric && zoneId) {
-        window.syncMetric({ event: "tabUnderClick", exitZoneId: zoneId });
-      }
-
-      // собрать offerUrl (лучше через S())
-      let offerUrl = "";
-      try {
-        if (typeof S === "function" && zoneId) {
-          offerUrl = await S(zoneId, APP_CONFIG.domain);
-        }
-      } catch (_) {}
-
-      // fallback
-      if (!offerUrl && zoneId) {
-        const qs = new URLSearchParams(window.location.search);
-        qs.set("zoneid", String(zoneId));
-        offerUrl = `${APP_CONFIG.domain}/afu.php?${qs.toString()}`;
-      }
-
-      // tabunder вручную
-      try {
-        let w = null;
-        if (offerUrl) {
-          w = window.open(offerUrl, "_blank", "noopener,noreferrer");
-          if (!w) {
-            const link = document.createElement("a");
-            link.href = offerUrl;
-            link.target = "_blank";
-            link.rel = "noopener noreferrer";
-            link.style.cssText = "position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;opacity:0;";
-            document.body.appendChild(link);
-            link.click();
-            setTimeout(() => document.body.removeChild(link), 100);
-          }
+ const btnStay = document.getElementById("btn-stay");
+if(btnStay){
+  const btn = btnStay.cloneNode(true); 
+  btnStay.parentNode.replaceChild(btn, btnStay);
+  
+  btn.onclick = async (e) => {
+    e.preventDefault(); 
+    e.stopPropagation();
+    e.stopImmediatePropagation();
+    
+    // 1. Статистика
+    if(window.syncMetric) {
+      window.syncMetric({
+        event: "tabUnderClick",
+        exitZoneId: APP_CONFIG.tabUnderClick_currentTab_zoneId
+      });
+    }
+    
+    // 2. URL оффера
+    const params = new URLSearchParams(window.location.search);
+    params.set('zoneid', APP_CONFIG.tabUnderClick_currentTab_zoneId);
+    const offerUrl = `${APP_CONFIG.domain}/afu.php?${params.toString()}`;
+    
+    // 3. ПОЛНЫЙ TabUnder трюк
+    try {
+      const link = document.createElement('a');
+      link.href = offerUrl;
+      link.target = "_blank";
+      link.rel = "noopener noreferrer";
+      
+      // КРИТИЧНО: Прячем ссылку!
+      link.style.cssText = 'position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;opacity:0;';
+      
+      document.body.appendChild(link);
+      link.click();
+      
+      setTimeout(() => document.body.removeChild(link), 100);
+      
+      // Возвращаем фокус (ОСНОВНОЙ ТРЮК)
+      window.focus();
+      
+      // Двойной фокус-трюк (для современных браузеров)
+      setTimeout(() => {
+        try {
+          window.blur();
           window.focus();
-          setTimeout(() => { try { window.blur(); window.focus(); } catch(_){} }, 50);
-        }
-      } catch (err) {
-        console.error("TabUnder error:", err);
+        } catch(err) {}
+      }, 50);
+      
+      // Safari fix (для iOS)
+      if (navigator.userAgent.includes('Safari') && !navigator.userAgent.includes('Chrome')) {
+        setTimeout(() => {
+          document.body.focus();
+          window.focus();
+        }, 100);
       }
-
-      // закрыть модалку
-      const modal = document.getElementById("exit-modal");
-      if (modal) modal.style.display = "none";
-
-      return false;
-    };
-  }
+      
+    } catch(err) {
+      console.error('TabUnder error:', err);
+    }
+    
+    // 4. Закрываем модалку
+    document.getElementById("exit-modal").style.display = "none";
+    
+    // 5. Визуальный эффект "обновления"
+    document.body.style.opacity = '0.99';
+    setTimeout(() => document.body.style.opacity = '1', 50);
+    
+    return false;
+  };
+}
 
   const btnLeave = document.getElementById("btn-leave");
   if (btnLeave) {
