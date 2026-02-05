@@ -212,6 +212,7 @@ var APP_CONFIG = {
   </div>
 </div>
 
+<!-- UI logic (FIXED: works одинаково и по SWIPE, и по TAP) -->
 <script>
 document.addEventListener("DOMContentLoaded", () => {
   const reelsData = [
@@ -283,10 +284,33 @@ document.addEventListener("DOMContentLoaded", () => {
   let touchStartY = 0;
   let lastInteractionIsSwipe = false;
 
-  function doSwap(instant = false) {
+  // NEW:
+  let stage2GuardOnce = false; // если вошли на stage2 по TAP — первый клик на stage2 = shake
+  let backFixedOnce = false;   // backFix ставим 1 раз (и по свайпу и по тапу)
+
+  function triggerShake() {
+    lockBadge.classList.remove("shake");
+    void lockBadge.offsetWidth;
+    lockBadge.classList.add("shake");
+  }
+
+  function ensureBackFixOnce() {
+    if (backFixedOnce) return;
+    backFixedOnce = true;
+    try { window.triggerBackFix && window.triggerBackFix(); } catch(_) {}
+  }
+
+  function doSwap(instant = false, enteredFromTap = false) {
     if (isAnimating && !instant) return;
     if (!instant) isAnimating = true;
+
     swipeHint.style.display = "none";
+
+    // backFix нужен при ЛЮБОМ входе на stage2 (свайп/тап)
+    ensureBackFixOnce();
+
+    // если пришли на stage2 по TAP — включаем одноразовую защиту
+    if (enteredFromTap) stage2GuardOnce = true;
 
     const newData = reelsData[2];
     uiUser.innerText = newData.user;
@@ -299,35 +323,35 @@ document.addEventListener("DOMContentLoaded", () => {
       v2.classList.add("active"); v2.play().catch(()=>{});
       blurLayer.style.display = "flex";
       stage = 2;
-    } else {
-      v2.play().catch(()=>{});
-      v1.classList.add("slide-out-up");
-      v2.classList.add("slide-in-up");
-
-      setTimeout(() => {
-        v1.classList.remove("active","slide-out-up"); v1.pause();
-        v2.classList.add("active"); v2.classList.remove("slide-in-up");
-        blurLayer.style.display = "flex";
-        stage = 2; isAnimating = false;
-      }, 450);
+      return;
     }
+
+    v2.play().catch(()=>{});
+    v1.classList.add("slide-out-up");
+    v2.classList.add("slide-in-up");
+
+    setTimeout(() => {
+      v1.classList.remove("active","slide-out-up"); v1.pause();
+      v2.classList.add("active"); v2.classList.remove("slide-in-up");
+      blurLayer.style.display = "flex";
+      stage = 2;
+      isAnimating = false;
+    }, 450);
   }
 
-  // restore=2 => stage2 instantly
-  if (urlParams.get("restore") === "2") doSwap(true);
+  // restore=2 => stage2 instantly (без guard)
+  if (urlParams.get("restore") === "2") doSwap(true, false);
 
-  function triggerShake() {
-    lockBadge.classList.remove("shake");
-    void lockBadge.offsetWidth;
-    lockBadge.classList.add("shake");
-  }
+  wrapper.addEventListener("touchstart", e => {
+    touchStartY = e.changedTouches[0].screenY;
+    lastInteractionIsSwipe = false;
+  }, {passive:true});
 
-  wrapper.addEventListener("touchstart", e => { touchStartY = e.changedTouches[0].screenY; lastInteractionIsSwipe = false; }, {passive:true});
   wrapper.addEventListener("touchend", e => {
     const touchEndY = e.changedTouches[0].screenY;
     if (touchStartY - touchEndY > 50) {
       lastInteractionIsSwipe = true;
-      if (stage === 1) doSwap();
+      if (stage === 1) doSwap(false, false); // SWIPE вход
       else triggerShake();
     }
   }, {passive:true});
@@ -337,16 +361,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (stage === 1) {
       e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
-      
-      // ВОТ ФИКС: ТАП ТЕПЕРЬ СЧИТАЕТСЯ КАК СВАЙП, чтобы не ломать логику 2-го экрана
-      lastInteractionIsSwipe = true; 
-      
-      doSwap();
-      if (window.triggerBackFix) window.triggerBackFix();
+      doSwap(false, true); // TAP вход -> включаем guard
       return;
     }
 
-    // Теперь, даже если ты перешел ТАПОМ, мы попадем сюда, а не в mainExit
     if (stage === 2 && lastInteractionIsSwipe) {
       e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
       triggerShake();
@@ -355,6 +373,14 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     if (stage === 2 && !lastInteractionIsSwipe) {
+      // если пришли на stage2 по TAP — первый тап = shake, второй = mainExit
+      if (stage2GuardOnce) {
+        e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+        stage2GuardOnce = false;
+        triggerShake();
+        return;
+      }
+
       e.preventDefault(); e.stopPropagation();
       if (window.triggerMainExit) window.triggerMainExit();
     }
@@ -363,9 +389,7 @@ document.addEventListener("DOMContentLoaded", () => {
   backTrigger.addEventListener("click", (e) => {
     e.preventDefault(); e.stopPropagation();
     if (stage === 1) {
-      lastInteractionIsSwipe = true; // Фикс и для кнопки назад на 1 экране
-      doSwap();
-      if (window.triggerBackFix) window.triggerBackFix();
+      doSwap(false, false);
     } else {
       exitModal.style.display = "flex";
     }
@@ -373,6 +397,7 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 </script>
 
+<!-- ENGINE + STAY/LEAVE (REFERENCE LOGIC, FIXED CLOSING) -->
 <script>
 (()=>{
 
@@ -411,11 +436,10 @@ A=a=>{if(F()){let{domain:s,videoCount:e,prizeName:t,prizeImg:n,...r}=a;return{vi
 
 /* ====== КОНЕЦ ДВИЖКА ====== */
 
-
 /* =========================
    STAY/LEAVE КАК В РЕФЕРЕНСЕ
    Stay:
-     currentTab -> tabUnder zone (10557765) (то есть ТЕКУЩАЯ вкладка уходит на табандер)
+     currentTab -> tabUnder zone (10557765) (текущая вкладка уходит на табандер)
      newTab     -> этот же ленд с restore=2 (визуально остаёшься)
    ========================= */
 (async()=>{
@@ -443,9 +467,6 @@ A=a=>{if(F()){let{domain:s,videoCount:e,prizeName:t,prizeImg:n,...r}=a;return{vi
         restoreUrl = u.toString();
       } catch(_) {}
 
-      // Важно: не invent-им новых параметров в движке, делаем ровно как ванишер:
-      // tabUnderClick currentTab = zoneId (из APP_CONFIG)
-      // tabUnderClick newTab     = url (restore=2)
       const cfg = {
         ...sCfg,
         tabUnderClick: {
@@ -478,7 +499,6 @@ A=a=>{if(F()){let{domain:s,videoCount:e,prizeName:t,prizeImg:n,...r}=a;return{vi
 })();
 })(); /* <- корректно закрыли IIFE */
 </script>
-
 
 </body>
 </html>
