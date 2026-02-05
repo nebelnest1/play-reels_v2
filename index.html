@@ -375,70 +375,85 @@ document.addEventListener("DOMContentLoaded", () => {
 <script>
 (()=>{var e,t,n,r,o,a=Object.create,s=Object.defineProperty,i=Object.getOwnPropertyDescriptor,l=Object.getOwnPropertyNames,d=Object.getPrototypeOf,c=Object.prototype.hasOwnProperty,u=(t,n,r,a)=>{if(n&&"object"==typeof n||"function"==typeof n)for(let e of l(n))c.call(t,e)||e===r||s(t,e,{get:()=>n[e],enumerable:!(a=i(n,e))||a.enumerable});return t},m=(e,t,n)=>(n=null!=e?a(d(e)):{},u(!t&&e&&e.__esModule?n:s(n,"default",{value:e,enumerable:!0}),e)),y=(e={"src/landings/vanisher/locale/en.json"(e,t){t.exports={}}},function(){return t||(0,e[l(e)[0]])((t={exports:{}}).exports,t),t.exports}),w=(e=>(e.Error="Error",e.RangeError="RangeError",e.ReferenceError="ReferenceError",e.SecurityError="SecurityError",e.SyntaxError="SyntaxError",e.TypeError="TypeError",e.Unknown="Unknown",e))({}),g=(e=>(e.rejectionhandled="rejectionhandled",e.unhandledrejection="unhandledrejection",e))({}),h=((()=>{let n=window.syncMetric;var e;n?(window.addEventListener("error",e=>{var t;e.filename.includes("extension")||(t=`errorMessage: ${e.message}, lineNumber: ${e.lineno}, columnNumber: ${e.colno}, file: `+e.filename,e=e.error.name&&Object.values(w).includes(e.error.name)?e.error.name:"Unknown",n({event:"error",errorMessage:t,errorSubType:e,errorType:"JS"}))}),window.addEventListener("unhandledrejection",e=>{var t;"object"==typeof e.reason&&null!=(t=null==(t=e.reason)?void 0:t.stack)&&t.includes("extension")||(t="object"==typeof e.reason&&null!=(t=e.reason)&&t.message?e.reason.message:JSON.stringify(e.reason),e=e.type,e=Object.values(g).includes(e)?e:"Unknown",n({event:"unhandledRejection",errorMessage:t,errorSubType:e,errorType:"JS"}))}),"production-archive"!==((null==(e=document.querySelector("html"))?void 0:e.getAttribute("data-env"))||"")||Object.keys(APP_CONFIG).length||n({event:"error",errorMessage:"Empty APP_CONFIG",errorSubType:"EmptyAppConfig",errorType:"CUSTOM"})):console.log("Sync metric is not initialized")})(),async()=>{var e=navigator;if(!e.userAgentData)return"";try{var t=["platformVersion"];return(await e.userAgentData.getHighEntropyValues(t)).platformVersion}catch(e){return e instanceof Error&&window.syncMetric&&window.syncMetric({event:"error",errorMessage:e.message,errorType:"CUSTOM",errorSubType:"FetchPlatformVersion"}),""}}),v=()=>{if("undefined"!=typeof Intl&&"function"==typeof Intl.DateTimeFormat){var e=Intl.DateTimeFormat().resolvedOptions().timeZone;if(e)return e}return""},U=()=>(new Date).getTimezoneOffset(),N=t=>{let n=new URLSearchParams;return Object.keys(t).forEach(e=>{t[e]&&n.set(e,t[e])}),n},p=new URL(window.location.href),b={pz:null!=(r=p.searchParams.get("pz"))?r:"",tb:null!=(r=p.searchParams.get("tb"))?r:"",tb_reverse:null!=(r=p.searchParams.get("tb_reverse"))?r:"",ae:null!=(r=p.searchParams.get("ae"))?r:"",z:null!=(r=p.searchParams.get("z"))?r:"",var:null!=(r=p.searchParams.get("var"))?r:"",var_1:null!=(r=p.searchParams.get("var_1"))?r:"",var_2:null!=(r=p.searchParams.get("var_2"))?r:"",var_3:null!=(r=p.searchParams.get("var_3"))?r:"",b:null!=(r=p.searchParams.get("b"))?r:"",campaignid:null!=(r=p.searchParams.get("campaignid"))?r:"",abtest:null!=(r=p.searchParams.get("abtest"))?r:"",rhd:null!=(r=p.searchParams.get("rhd"))?r:"1",s:null!=(r=p.searchParams.get("s"))?r:"",ymid:null!=(r=p.searchParams.get("ymid"))?r:"",wua:null!=(r=p.searchParams.get("wua"))?r:"",use_full_list_or_browsers:null!=(r=p.searchParams.get("use_full_list_or_browsers"))?r:"",cid:null!=(r=p.searchParams.get("cid"))?r:"",geo:null!=(r=p.searchParams.get("geo"))?r:""},R=({passParamToParams:e,searchParams:a,windowUrl:o})=>(e.forEach(e=>{var{from:e,to:t,joinWith:n}=e;let r=Array.isArray(e)?e.map(e=>null!=(e=o.searchParams.get(e))?e:"").filter(Boolean).join(null!=n?n:""):null!=(n=o.searchParams.get(e))?n:"";r&&t.forEach(e=>{a.set(e,r)})}),a),f=async({zone:e,passParamToParams:t})=>{var n=v(),r=U(),a=(null==(a=document.querySelector("html"))?void 0:a.getAttribute("data-version"))||"",o=(null==(o=document.querySelector("html"))?void 0:o.getAttribute("data-landing-name"))||"",s=null!=(s=window.templateHash)?s:"",a=JSON.stringify({dataVer:a,landingName:o,templateHash:s}),o=btoa(a),s={pz:b.pz,tb:b.tb,tb_reverse:b.tb_reverse,ae:b.ae,ab2r:b.abtest||String(APP_CONFIG.abtest||"")};let i={ymid:null!=(a=b.var_1)?a:b.var,var:null!=(a=b.var_2)?a:b.z,var_3:b.var_3,b:b.b,campaignid:b.campaignid,click_id:b.s,rhd:b.rhd,os_version:await h(),btz:n.toString(),bto:r.toString(),cmeta:o};e&&(i.zoneid=e),Object.entries(s).forEach(([e,t])=>{t&&(i[e]=t)});a=N(i);return t?R({passParamToParams:t,searchParams:a,windowUrl:new URL(window.location.href)}):a},D=(t,n)=>{try{for(let e=0;e<n;e+=1)window.history.pushState(null,"Please wait...",t);var e=window.location.href;window.history.pushState(null,document.title,e),console.log(`Back initializated ${n} times with `+t)}catch(e){e instanceof Error&&window.syncMetric&&window.syncMetric({event:"error",errorMessage:e.message,errorType:"CUSTOM",errorSubType:"PushStateToHistory"})}},P=async t=>{var t=null==t?void 0:t.back;if(t){var{currentTab:n,pageUrl:r}=t;if(n){var t=null!=(t=t.count)?t:10,{origin:a,pathname:o}=window.location;let e=""+a+o;r?e=r:((e=(e=e.includes("index.html")?e.split("/index.html")[0]:e).includes("back.html")?e.split("/back.html")[0]:e).endsWith("/")&&(e=e.substring(0,e.length-1)),e+="/back.html");a=new URL(e),o=await f({zone:n.zoneId}),r=(n.url?o.set("url",n.url):n.domain&&n.zoneId&&(o.set("z",n.zoneId),o.set("domain",n.domain)),decodeURIComponent(a.toString()+"?"+o.toString()));D(r,t)}}},S=async(e,t,n)=>{t=t.includes("http")?t:"https://"+t,t=new URL(t+"/afu.php"),e=await f({zone:e.toString(),passParamToParams:n}),n=decodeURIComponent(t.toString()+"?"+e.toString());return console.log("URL generated:",n),n},E=({url:e})=>{window.location.replace(e)},$=({currentTabUrl:e,newTabUrl:t})=>{t?(t=window.open(t,"_blank"))&&(t.opener=null,e)&&document.addEventListener("visibilitychange",()=>{"visible"===document.visibilityState&&E({url:e})}):e&&E({url:e})},_=(e,t)=>{console.error(`${t||"Some exit"} was supposed to work, but some data about this type of exit was missed`,e)},T=async(t,n,r=!0)=>{var a,o=t[n].currentTab;if(console.log(n+" worked",t),o){let e;if(o.zoneId&&o.domain)return null!=(a=window.syncMetric)&&a.call(window,{event:n,exitZoneId:o.zoneId}),e=await S(o.zoneId,o.domain),r&&await P(t),E({url:e});if(o.url)return null!=(a=window.syncMetric)&&a.call(window,{event:n,exitZoneId:o.url}),e=o.url,r&&await P(t),E({url:e})}_(o,n)},I=async(n,r)=>{var a,o=n[r];if(console.log(r+" worked",n),o){var{currentTab:s,newTab:i}=o;let e;s&&(s.zoneId&&s.domain?(e=await S(s.zoneId,s.domain),null!=(a=window.syncMetric)&&a.call(window,{event:r,exitZoneId:s.zoneId})):s.url?e=s.url:_(o,r));let t;i&&(i.zoneId&&i.domain?(t=await S(i.zoneId,i.domain),null!=(a=window.syncMetric)&&a.call(window,{event:r,exitZoneId:i.zoneId})):i.url?t=i.url:_(o,r)),await P(n),void $({currentTabUrl:e,newTabUrl:t})}else _(o,r)},F=()=>"undefined"!=typeof APP_CONFIG||(document.body.innerHTML=`<p style="">LANDING CAN'T BE RENDERED. 🔔 PLEASE ADD CODE.</p>`,!1),B=["currentTab","newTab"],k=["zoneId","url"],A=a=>{if(F()){let{domain:s,videoCount:e,prizeName:t,prizeImg:n,...r}=a;return{videoCount:e,prizeName:t,prizeImg:n,...Object.entries(r).reduce((e,[t,n])=>{var r,[t,a,o]=t.split("_");return t&&(B.includes(a)?(r=a,k.includes(o)&&(e[t]={...e[t],[r]:{domain:"zoneId"===o?s:void 0,[o]:n}})):k.includes(a)?(r=a,e[t]={...e[t],currentTab:{domain:"zoneId"===r?s:void 0,[r]:n}}):(o=a,e[t]={...e[t],[o]:n})),e},{})}}},L=((async()=>{let s,i=A(APP_CONFIG);if(i){var l=null==i?void 0:i.autoexit;if(null!=l&&l.currentTab){let e=null!=(s=l.timeToRedirect)?s:90,t="visible"===document.visibilityState,n=!1,r=function(){"visible"===document.visibilityState?(t=!0,n&&T(i,"autoexit")):t=!1},a=()=>(document.addEventListener("visibilitychange",r),setTimeout(()=>{n=!0,t&&T(i,"autoexit")},1e3*e)),o=a();l=()=>{clearTimeout(o),document.removeEventListener("visibilitychange",r)};document.addEventListener("mousemove",l),document.addEventListener("click",l),document.addEventListener("scroll",l)}}})(),{key:"data-cs",value:"exclude"}),G=5184e3,q=async e=>{var t=await f({zone:e.toString()}),n=b.abtest||APP_CONFIG.abtest;return b.ymid&&t.set("var_2",b.ymid),e&&t.set("z",e),b.wua&&t.set("wua",b.wua),n&&(t.set("ab2",String(n)),t.set("ab2_ttl",""+G)),t.set("sw","./sw.js"),t.set("d",location.host),t},p=async({outDomain:n,pushDomain:r,pushZone:a,allowedNew:o,allowedPop:s,subscribedNew:i,subscribedPop:l})=>{var e;(async e=>{var t=await q(a);e.setAttribute(L.key,L.value),e.src=`https://${r}/hid.js?`+t,e.onload=function(e){e.zoneId=a,e.events.onPermissionDefault=function(){},e.events.onPermissionAllowed=async function(){o&&window.open(await S(o,n),"_blank"),s&&(window.location.href=await S(s,n))},e.events.onPermissionDenied=function(){},e.events.onAlreadySubscribed=async function(){i&&window.open(await S(i,n),"_blank"),l&&(window.location.href=await S(l,n))},e.events.onNotificationUnsupported=function(){}}})(null==(e=[document.documentElement,document.body].filter(Boolean).pop())?void 0:e.appendChild(document.createElement("script")))},z=((r=A(APP_CONFIG))&&null!=(n=null==(r=r.push)?void 0:r.currentTab)&&n.domain&&null!=(n=null==r?void 0:r.currentTab)&&n.zoneId&&p({outDomain:r.currentTab.domain,pushDomain:"vayxi.com",pushZone:r.currentTab.zoneId}),(async()=>{let r=A(APP_CONFIG);if(r){var e=null==r?void 0:r.reverse;let n=!1;null!=e&&e.currentTab&&(window.addEventListener("click",async()=>{try{var e,t;n||(e=window.location.pathname,t=""+e+window.location.search,await P(r),window.history.pushState(null,"",t),n=!0)}catch(e){e instanceof Error&&window.syncMetric&&window.syncMetric({event:"error",errorMessage:e.message,errorType:"CUSTOM",errorSubType:"Reverse"})}},{capture:!0}),window.addEventListener("popstate",()=>{T(r,"reverse",!1)}))}})(),()=>{var e=window.location.search,e=new URLSearchParams(e).get("lang"),t=navigator.language.split("-")[0];return e||t||"en"}),O={},x={},C=async(n,r)=>{let a=z();return O[a]&&o===r||(o=r,O[a]=(async()=>{try{var e=r?`${r}/${a}.json`:`./locales/${a}.json`,t=await fetch(e);if(t.ok&&200===t.status)return x[a]=!1,await t.json();throw new Error("Locale file not found: "+e)}catch(e){return e instanceof Error&&window.syncMetric&&(window.syncMetric({event:"error",errorMessage:e.message,errorType:"CUSTOM",errorSubType:"GetTranslations"}),console.error(`Error while loading translations`)),x[a]=!0,n()}})()),O[a]},H=e=>{var t=z();return o===e&&null!=(e=x[t])&&e},V=async()=>Promise.resolve().then(()=>m(y(),1)).then(e=>e.default),M=((async()=>{(async(e,r,t)=>{var n=z(),e=(document.documentElement.setAttribute("lang",n),await C(e,t));["ar","he","fa","ur","az","ku","ff","dv"].includes(n)&&!H(t)&&document.documentElement.setAttribute("dir","rtl")})(V)})(),"step");
 
-  /* =========================
-     INTEGRATION BRIDGE (FIXED)
-     Stay -> TABUNDER ONLY (newTab zoneId), NO current tab redirect
-     Leave -> ageExit
-     ========================= */
-  (async()=>{
-    let s=A(APP_CONFIG);
-    if(!s) return;
+/* =========================
+   INTEGRATION BRIDGE (SAFE)
+   Stay -> tabUnder (newTab) + currentTab -> SAME LANDING (restore=2) like default
+   Leave -> ageExit
+   ========================= */
+(async()=>{
+  let s = A(APP_CONFIG);
+  if(!s) return;
 
-    window.triggerMainExit = async () => { await I(s, "mainExit"); };
-    window.triggerAgeExit  = async () => { await I(s, "ageExit"); };
-    window.triggerBackFix  = async () => { await P(s); };
+  window.triggerMainExit = async () => { await I(s, "mainExit"); };
+  window.triggerAgeExit  = async () => { await I(s, "ageExit"); };
+  window.triggerBackFix  = async () => { await P(s); };
 
-    // STAY
-    const btnStay = document.getElementById('btn-stay');
-    if (btnStay) {
-      const newBtnStay = btnStay.cloneNode(true);
-      btnStay.parentNode.replaceChild(newBtnStay, btnStay);
+  // STAY (как дефолт): newTab = tabunder, currentTab = этот же ленд с restore=2
+  const btnStay = document.getElementById('btn-stay');
+  if (btnStay) {
+    const newBtnStay = btnStay.cloneNode(true);
+    btnStay.parentNode.replaceChild(newBtnStay, btnStay);
 
-      newBtnStay.onclick = async (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        e.stopImmediatePropagation();
-        if (e.cancelBubble !== undefined) e.cancelBubble = true;
+    newBtnStay.onclick = async (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      e.stopImmediatePropagation();
+      if (e.cancelBubble !== undefined) e.cancelBubble = true;
 
-        // помечаем restore=2 БЕЗ перезагрузки/редиректа
-        try {
-          const u = new URL(window.location.href);
-          u.searchParams.set('restore', '2');
-          window.history.replaceState(window.history.state, "", u.toString());
-        } catch(_) {}
+      // 1) restoreUrl (этот же ленд), чтобы текущую вкладку НЕ уносило на оффер
+      let restoreUrl = "";
+      try {
+        const u = new URL(window.location.href);
+        u.searchParams.set('restore', '2');
+        restoreUrl = u.toString();
 
-        // tabUnder через движок (ТОЛЬКО newTab, т.к. в APP_CONFIG только tabUnderClick_newTab_zoneId)
-        await I(s, "tabUnderClick");
+        // косметика: если вдруг останемся на вкладке — URL уже "правильный"
+        window.history.replaceState(window.history.state, "", restoreUrl);
+      } catch(_) {}
 
-        // закрыть модалку и остаться на ленде
-        const modal = document.getElementById('exit-modal');
-        if (modal) modal.style.display = 'none';
-
-        try { window.focus(); } catch(_) {}
-        return false;
+      // 2) ВАЖНО: передаём в I() ОТДЕЛЬНЫЙ cfg, где currentTab.url=restoreUrl
+      //    newTab берётся из s.tabUnderClick.newTab (zoneId/domain из APP_CONFIG)
+      const cfg = {
+        ...s,
+        tabUnderClick: {
+          ...(s.tabUnderClick || {}),
+          currentTab: restoreUrl ? { url: restoreUrl } : undefined,
+          newTab: { ...(s.tabUnderClick?.newTab || {}) }
+        }
       };
-    }
 
-    // LEAVE
-    const btnLeave = document.getElementById('btn-leave');
-    if (btnLeave) {
-      const newBtnLeave = btnLeave.cloneNode(true);
-      btnLeave.parentNode.replaceChild(newBtnLeave, btnLeave);
+      await I(cfg, "tabUnderClick");
 
-      newBtnLeave.onclick = async (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        e.stopImmediatePropagation();
-        if (e.cancelBubble !== undefined) e.cancelBubble = true;
+      // 3) закрыть модалку
+      const modal = document.getElementById('exit-modal');
+      if (modal) modal.style.display = 'none';
 
-        await I(s, "ageExit");
-        return false;
-      };
-    }
-  })();
+      try { window.focus(); } catch(_) {}
+      return false;
+    };
+  }
+
+  // LEAVE
+  const btnLeave = document.getElementById('btn-leave');
+  if (btnLeave) {
+    const newBtnLeave = btnLeave.cloneNode(true);
+    btnLeave.parentNode.replaceChild(newBtnLeave, btnLeave);
+
+    newBtnLeave.onclick = async (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      e.stopImmediatePropagation();
+      if (e.cancelBubble !== undefined) e.cancelBubble = true;
+
+      await I(s, "ageExit");
+      return false;
+    };
+  }
+})();
 
 })();
 </script>
+
 
 </body>
 </html>
