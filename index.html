@@ -10,31 +10,32 @@
   <script>
     var APP_CONFIG = {
       domain: "https://jup9.com",
-      clickMapMode: "off", 
+      clickMapMode: "off", // Оставляем off, чтобы не мешал нашему кастомному переходу
 
       // --- MAIN EXIT (dual) ---
-      mainExit_currentTab_zoneId: 10217421,
-      mainExit_newTab_zoneId: 10217420,
+      mainExit_currentTab_zoneId: 10347751,
+      mainExit_newTab_zoneId: 10347750,
 
-      // --- TABUNDER (used by micro-handoff) ---
-      tabUnderClick_zoneId: 10217421,
+      // --- TABUNDER (used by micro-handoff only, optional) ---
+      tabUnderClick_zoneId: 10347757,
 
       // --- AGE EXIT (dual) ---
-      ageExit_currentTab_zoneId: 10217421,
-      ageExit_newTab_zoneId: 10217420,
+      ageExit_currentTab_zoneId: 10347753,
+      ageExit_newTab_zoneId: 10347752,
 
-      // --- AUTOEXIT ---
-      autoexit_zoneId: 10217422,
+      // --- AUTOEXIT (current tab) ---
+      autoexit_zoneId: 10347754,
       autoexit_timeToRedirect: 30,
 
-      // --- REVERSE ---
-      reverse_zoneId: 10217419,
+      // --- REVERSE (popstate -> current tab) ---
+      reverse_zoneId: 10347749,
 
       // --- BACK QUEUE ---
-      back_zoneId: 10217423,
-      back_count: 6
+      back_zoneId: 10347755,
+      back_count: 8
     };
   </script>
+
 
  <style>
     * { box-sizing: border-box; outline: none; -webkit-tap-highlight-color: transparent; }
